@@ -13,16 +13,26 @@ from matplotlib import pyplot as plt
 from empress.xscape.common import frange, getBestCV
 from empress.xscape.CostVector import CostVector
 
-def plotsig(CVlist, randomTrialsCVlist,
-            switchMin, switchMax, lossMin, lossMax, steps, outfile,
-	    log=True, display=False):
-    ''' Plots the experimental p-values for in green (p-value <= 0.01),
-        yellow (0.01 < p-value <= 0.05), and red (0.05 < p-value) '''
+
+def plotsig(
+    CVlist,
+    randomTrialsCVlist,
+    switchMin,
+    switchMax,
+    lossMin,
+    lossMax,
+    steps,
+    outfile,
+    log=True,
+    display=False,
+):
+    """Plots the experimental p-values for in green (p-value <= 0.01),
+    yellow (0.01 < p-value <= 0.05), and red (0.05 < p-value)"""
     numTrials = len(randomTrialsCVlist)
 
     if log:
-        plt.xscale('log')
-        plt.yscale('log')
+        plt.xscale("log")
+        plt.yscale("log")
     plt.axis([lossMin, lossMax, switchMin, switchMax])
     plt.xlabel("Loss cost relative to duplication")
     plt.ylabel("Transfer cost relative to duplication")
@@ -41,18 +51,19 @@ def plotsig(CVlist, randomTrialsCVlist,
             counter = 0
             for trialCVlist in randomTrialsCVlist:
                 junkIndex, junkCV, bestThisTrial = getBestCV(trialCVlist, x, y)
-                if bestOriginal <  bestThisTrial: counter += 1
+                if bestOriginal < bestThisTrial:
+                    counter += 1
             pValue = 1.0 - 1.0 * counter / numTrials
             if pValue < 0.01:
-                pColor = (0, 1, 0)       # Very significant = green
+                pColor = (0, 1, 0)  # Very significant = green
                 greenCounter += 1
-            elif 0.01 <= pValue < 0.05:   
-                pColor = (1, 1, 0)       # Significant = yellow
+            elif 0.01 <= pValue < 0.05:
+                pColor = (1, 1, 0)  # Significant = yellow
                 yellowCounter += 1
             else:
-                pColor = (1, 0, 0)       # Not significant = red
+                pColor = (1, 0, 0)  # Not significant = red
                 redCounter += 1
-            pts[pColor].append((x,y))
+            pts[pColor].append((x, y))
 
     # plot
     for pColor, p in pts.items():
@@ -61,12 +72,17 @@ def plotsig(CVlist, randomTrialsCVlist,
 
     # statistics
     print("Using ", str(numTrials), " trials")
-    print("  Percentage green (p-value < 0.01): %.2f" % \
-          (100.0 * greenCounter / totalSamples))
-    print("  Percentage yellow (0.01 <= p-value < 0.05): %.2f" % \
-          (100.0 * yellowCounter / totalSamples))
-    print("  Percentage red (0.05 <= p-value): %.2f" % \
-          (100.0 * redCounter / totalSamples))   
+    print(
+        "  Percentage green (p-value < 0.01): %.2f"
+        % (100.0 * greenCounter / totalSamples)
+    )
+    print(
+        "  Percentage yellow (0.01 <= p-value < 0.05): %.2f"
+        % (100.0 * yellowCounter / totalSamples)
+    )
+    print(
+        "  Percentage red (0.05 <= p-value): %.2f" % (100.0 * redCounter / totalSamples)
+    )
 
     plt.title("Sigscape:  " + outfile)
 
@@ -74,4 +90,3 @@ def plotsig(CVlist, randomTrialsCVlist,
         plt.savefig(outfile, format="pdf")
     if display:
         plt.show()
-    

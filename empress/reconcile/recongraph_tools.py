@@ -32,7 +32,7 @@ from numpy import median as md
 from empress.reconcile import reconcile_main_input
 from empress.input_reader import _ReconInput
 
-Infinity = float('inf')
+Infinity = float("inf")
 
 
 def preorder(tree: dict, root_edge_name: Tuple) -> Iterator:
@@ -55,8 +55,8 @@ def preorder(tree: dict, root_edge_name: Tuple) -> Iterator:
 
 
 def postorder(tree: dict, root_edge_name: Tuple) -> Iterator:
-    """ The parameters of this function are the same as that of preorder above, except it
-    yields the edge list in postorder. """
+    """The parameters of this function are the same as that of preorder above, except it
+    yields the edge list in postorder."""
 
     value = tree[root_edge_name]
     _, _, left_child_edge_name, right_child_edge_name = value
@@ -91,7 +91,9 @@ def contemporaneous(host_1, host_1_parent, host_2, host_2_parent, distances):
     return True
 
 
-def DP(tree_data: _ReconInput, dup_cost: float, transfer_cost: float, loss_cost: float) -> Tuple[dict, float, int, list]:
+def DP(
+    tree_data: _ReconInput, dup_cost: float, transfer_cost: float, loss_cost: float
+) -> Tuple[dict, float, int, list]:
     """
     :param tree_data <_ReconInput> object - See newickFormatReader (data comes from getInput)
     :param dup_cost <float> - cost of a duplication event
@@ -131,7 +133,6 @@ def DP(tree_data: _ReconInput, dup_cost: float, transfer_cost: float, loss_cost:
 
     # Following logic taken from tech report, we loop over all ep and eh
     for ep in postorder(parasite_dict, "pTop"):
-
         # Get the parasite tree info in the format
         # (vp top, vp bottom, edge of child 1, edge of child 2)
         _, vp, ep1, ep2 = parasite_dict[ep]
@@ -150,7 +151,6 @@ def DP(tree_data: _ReconInput, dup_cost: float, transfer_cost: float, loss_cost:
 
         # Begin looping over host edges
         for eh in postorder(host_dict, "hTop"):
-
             # Similar format to that of the parasite tree above
             _, vh, eh1, eh2 = host_dict[eh]
 
@@ -172,10 +172,8 @@ def DP(tree_data: _ReconInput, dup_cost: float, transfer_cost: float, loss_cost:
 
             # Compute A(ep, eh)
             if vh_is_a_tip:
-
                 # Check if the tips map to one another
                 if vp_is_a_tip and tip_mapping[vp] == vh:
-
                     # The cost of matching mapped tips (thus, their edges) is 0
                     A[(ep, eh)] = 0
 
@@ -187,20 +185,17 @@ def DP(tree_data: _ReconInput, dup_cost: float, transfer_cost: float, loss_cost:
                     A[(ep, eh)] = Infinity
                     A_min = [Infinity]
             else:
-
                 # Compute Co and create event list to add to events_dict
                 if not vp_is_a_tip:
-
                     # Calculate cospeciation cost assuming the cost is 0
-                    co_ep_eh = min(C[(ep1, eh1)] + C[(ep2, eh2)],
-                                   C[(ep1, eh2)] + C[(ep2, eh1)])
+                    co_ep_eh = min(
+                        C[(ep1, eh1)] + C[(ep2, eh2)], C[(ep1, eh2)] + C[(ep2, eh1)]
+                    )
                     co_min = []  # List to keep track lowest cost speciation
                     if co_ep_eh == C[(ep2, eh1)] + C[(ep1, eh2)]:
-                        co_min.append(("S", (p_child2, h_child1),
-                                       (p_child1, h_child2)))
+                        co_min.append(("S", (p_child2, h_child1), (p_child1, h_child2)))
                     if co_ep_eh == C[(ep1, eh1)] + C[(ep2, eh2)]:
-                        co_min.append(("S", (p_child1, h_child1),
-                                       (p_child2, h_child2)))
+                        co_min.append(("S", (p_child1, h_child1), (p_child2, h_child2)))
                 else:
                     co_ep_eh = Infinity
                     co_min = [Infinity]
@@ -230,7 +225,6 @@ def DP(tree_data: _ReconInput, dup_cost: float, transfer_cost: float, loss_cost:
             # Compute C(ep, eh)
             # First, compute D
             if not vp_is_a_tip:
-
                 # Calculate the cost of a duplication event
                 dup_ep_eh = dup_cost + C[(ep1, eh)] + C[(ep2, eh)]
 
@@ -246,25 +240,28 @@ def DP(tree_data: _ReconInput, dup_cost: float, transfer_cost: float, loss_cost:
                 switch_list = []  # List to keep track of lowest cost switch
 
                 # Calculate the cost of a switch/transfer event
-                switch_ep_eh = transfer_cost + min(C[(ep1, eh)] + best_switch[(ep2, eh)],
-                                                   C[(ep2, eh)] + best_switch[(ep1, eh)])
+                switch_ep_eh = transfer_cost + min(
+                    C[(ep1, eh)] + best_switch[(ep2, eh)],
+                    C[(ep2, eh)] + best_switch[(ep1, eh)],
+                )
 
                 # If ep2 switching has the lowest cost or equal to the other
-                if (C[(ep1, eh)] + best_switch[(ep2, eh)]) <= (C[(ep2, eh)] +
-                                                               best_switch[(ep1, eh)]):
-
+                if (C[(ep1, eh)] + best_switch[(ep2, eh)]) <= (
+                    C[(ep2, eh)] + best_switch[(ep1, eh)]
+                ):
                     # Search for the optimal switch location by searching through the best switch
                     # locations for the given child and vh pair
                     for location in best_switch_locations[(p_child2, vh)]:
                         # Proposed new landing site
                         current_loc = location[1]
                         # Append the proposed event to the list of possible switches
-                        switch_list.append(("T", (p_child1, vh), (p_child2,
-                                                                  current_loc)))
+                        switch_list.append(
+                            ("T", (p_child1, vh), (p_child2, current_loc))
+                        )
                 # If ep1 switching has the lowest cost or equal to the other
-                elif (C[(ep2, eh)] + best_switch[(ep1, eh)]) <= (C[(ep1, eh)] +
-                                                                 best_switch[(ep2, eh)]):
-
+                elif (C[(ep2, eh)] + best_switch[(ep1, eh)]) <= (
+                    C[(ep1, eh)] + best_switch[(ep2, eh)]
+                ):
                     # Search for the optimal switch location by searching through the best switch
                     # locations for the given child and vh pair
                     for location in best_switch_locations[(p_child1, vh)]:
@@ -272,8 +269,9 @@ def DP(tree_data: _ReconInput, dup_cost: float, transfer_cost: float, loss_cost:
                         current_loc = location[1]
 
                         # Append the proposed event to the list of possible switches
-                        switch_list.append(("T", (p_child2, vh),
-                                            (p_child1, current_loc)))
+                        switch_list.append(
+                            ("T", (p_child2, vh), (p_child1, current_loc))
+                        )
 
             else:  # vp is a tip
                 switch_ep_eh = Infinity
@@ -305,14 +303,18 @@ def DP(tree_data: _ReconInput, dup_cost: float, transfer_cost: float, loss_cost:
                 O[(ep, eh)] = C[(ep, eh)]
                 o_best[(vp, vh)] = [(vp, vh)]
             else:
-
                 # Compute O(ep, eh) if vh is not a tip
                 O[(ep, eh)] = min(C[(ep, eh)], O[(ep, eh1)], O[(ep, eh2)])
 
                 # o_min helps us easily find which value (between C, O for child 1, and O for child 2) produces
                 # O for this edge. Knowing what its indices represent, we search through to see which produce O
-                o_min = [ind for ind, elem in enumerate([C[(ep, eh)], O[(ep, eh1)], O[(ep, eh2)]])
-                         if elem == O[(ep, eh)]]
+                o_min = [
+                    ind
+                    for ind, elem in enumerate(
+                        [C[(ep, eh)], O[(ep, eh1)], O[(ep, eh2)]]
+                    )
+                    if elem == O[(ep, eh)]
+                ]
 
                 # Corresponds to C
                 if 0 in o_min:
@@ -328,7 +330,6 @@ def DP(tree_data: _ReconInput, dup_cost: float, transfer_cost: float, loss_cost:
         best_switch[(ep, "hTop")] = Infinity
         best_switch_locations[(vp, host_dict["hTop"][1])] = [(None, None)]
         for eh in preorder(host_dict, "hTop"):
-
             # Redefine the host information for this new loop
             _, vh, eh1, eh2 = host_dict[eh]
 
@@ -345,7 +346,6 @@ def DP(tree_data: _ReconInput, dup_cost: float, transfer_cost: float, loss_cost:
             # Find best cost for a switch to occur (best_switch)
             # and the location to which the edge switches (best_switch_locations)
             if not vh_is_a_tip:
-
                 # Initialize lists for switch locations
                 best_switch_locations[(vp, h_child1)] = []
                 best_switch_locations[(vp, h_child2)] = []
@@ -355,24 +355,28 @@ def DP(tree_data: _ReconInput, dup_cost: float, transfer_cost: float, loss_cost:
                 best_switch[(ep, eh2)] = min(best_switch[(ep, eh)], O[(ep, eh1)])
 
                 # Add best switch locations for child 1
-                if best_switch[(ep, eh1)] == best_switch[(ep, eh)] and \
-                        best_switch_locations[(vp, vh)] != [(None, None)]:
+                if best_switch[(ep, eh1)] == best_switch[
+                    (ep, eh)
+                ] and best_switch_locations[(vp, vh)] != [(None, None)]:
                     best_switch_locations[(vp, h_child1)].extend(
-                        best_switch_locations[(vp, vh)])
-                if best_switch[(ep, eh1)] == O[(ep, eh2)] and \
-                        o_best[(vp, h_child2)] != [(None, None)]:
-                    best_switch_locations[(vp, h_child1)].extend(
-                        o_best[(vp, h_child2)])
+                        best_switch_locations[(vp, vh)]
+                    )
+                if best_switch[(ep, eh1)] == O[(ep, eh2)] and o_best[
+                    (vp, h_child2)
+                ] != [(None, None)]:
+                    best_switch_locations[(vp, h_child1)].extend(o_best[(vp, h_child2)])
 
                 # Add best switch locations for child 2
-                if best_switch[(ep, eh2)] == best_switch[(ep, eh)] and \
-                        best_switch_locations[(vp, vh)] != [(None, None)]:
+                if best_switch[(ep, eh2)] == best_switch[
+                    (ep, eh)
+                ] and best_switch_locations[(vp, vh)] != [(None, None)]:
                     best_switch_locations[(vp, h_child2)].extend(
-                        best_switch_locations[(vp, vh)])
-                if best_switch[(ep, eh2)] == O[(ep, eh1)] and \
-                        o_best[(vp, h_child1)] != [(None, None)]:
-                    best_switch_locations[(vp, h_child2)].extend(
-                        o_best[(vp, h_child1)])
+                        best_switch_locations[(vp, vh)]
+                    )
+                if best_switch[(ep, eh2)] == O[(ep, eh1)] and o_best[
+                    (vp, h_child1)
+                ] != [(None, None)]:
+                    best_switch_locations[(vp, h_child2)].extend(o_best[(vp, h_child1)])
 
     # Create the list of minimum cost mapping nodes involving root of parasite tree
     tree_min = find_best_roots(parasite_dict, min_cost)
@@ -389,7 +393,9 @@ def DP(tree_data: _ReconInput, dup_cost: float, transfer_cost: float, loss_cost:
     return dtl_recon_graph, best_cost, mpr_count, tree_min
 
 
-def calculate_mean_med_event_nodes_per_mapping_node(dtl_recon_graph: dict) -> Tuple[float, float, list]:
+def calculate_mean_med_event_nodes_per_mapping_node(
+    dtl_recon_graph: dict,
+) -> Tuple[float, float, list]:
     """
     :param dtl_recon_graph: a DTL Maximum Parsimony Reconciliation graph, as outputted by DP
     :return: the mean and median number of event nodes per mapping node in the given reconciliation,
@@ -468,7 +474,9 @@ def count_mprs(mapping_node: tuple, dtl_recon_graph: dict, memo: dict) -> int:
         mapping_child2 = eventNode[2]
 
         # Add the product of the counts of both children (over all children) for this event to get the parent's count
-        count += count_mprs(mapping_child1, dtl_recon_graph, memo) * count_mprs(mapping_child2, dtl_recon_graph, memo)
+        count += count_mprs(mapping_child1, dtl_recon_graph, memo) * count_mprs(
+            mapping_child2, dtl_recon_graph, memo
+        )
 
     # Save the result in the memo
     memo[mapping_node] = count
@@ -489,7 +497,7 @@ def find_best_roots(parasite_dict: dict, min_cost_dict: dict) -> list:
     """
     tree_tops = []
     for key in min_cost_dict:
-        if key[0] == parasite_dict['pTop'][1]:
+        if key[0] == parasite_dict["pTop"][1]:
             tree_tops.append(key)
     tree_min = []
     min_score = min([min_cost_dict[root] for root in tree_tops])
@@ -499,7 +507,9 @@ def find_best_roots(parasite_dict: dict, min_cost_dict: dict) -> list:
     return tree_min
 
 
-def build_dtl_recon_graph(best_roots: list, event_dict: dict, unique_dict: dict) -> dict:
+def build_dtl_recon_graph(
+    best_roots: list, event_dict: dict, unique_dict: dict
+) -> dict:
     """
     :param best_roots: a list of minimum cost reconciliation roots - see findBestRoots
     for more info on the format of this input
@@ -521,8 +531,9 @@ def build_dtl_recon_graph(best_roots: list, event_dict: dict, unique_dict: dict)
     return unique_dict
 
 
-def reconcile(tree_data: _ReconInput, dup_cost: float, transfer_cost: float, loss_cost: float) -> Tuple[
-    dict, dict, dict, int, list]:
+def reconcile(
+    tree_data: _ReconInput, dup_cost: float, transfer_cost: float, loss_cost: float
+) -> Tuple[dict, dict, dict, int, list]:
     """
     :param tree_data <_ReconInput>: Output of newickFormatReader.getInput()
     :param dup_cost: the cost associated with a duplication event
@@ -535,40 +546,50 @@ def reconcile(tree_data: _ReconInput, dup_cost: float, transfer_cost: float, los
     # Note: I have made modifications to the return statement to make diameter.py possible without re-reconciling.
     host = tree_data.host_dict
     paras = tree_data.parasite_dict
-    graph, best_cost, num_recon, best_roots = DP(tree_data, dup_cost, transfer_cost, loss_cost)
+    graph, best_cost, num_recon, best_roots = DP(
+        tree_data, dup_cost, transfer_cost, loss_cost
+    )
     return host, paras, graph, num_recon, best_roots
 
 
 # The remaining code handles the case of the user wanting to run reconcile from the command line
 
+
 def usage():
     """
     :return: the usage statement associated with reconcile, and thus the main execution block
     """
-    return ('usage: DTLReconGraph filename D_cost T_cost L_cost\n\t  filename: the name of the file that contains'
-            ' the data \n\t  D_cost, T_cost, L_cost: costs for duplication, transfer, and loss events,'
-            ' respectively')
+    return (
+        "usage: DTLReconGraph filename D_cost T_cost L_cost\n\t  filename: the name of the file that contains"
+        " the data \n\t  D_cost, T_cost, L_cost: costs for duplication, transfer, and loss events,"
+        " respectively"
+    )
 
 
 # This should be called in empress_cli.py when the user wants to run reconcile
 def reconcile_inter(tree_data: _ReconInput):
-    """ 
+    """
     :param tree_data <_ReconInput>: Output of newickFormatReader.getInput()
     """
     duplication, transfer, loss = reconcile_main_input.get_inputs()
     result = reconcile(tree_data, duplication, transfer, loss)
     for i in range(len(result)):
-        print((str(result[i]) + '\n'))
+        print((str(result[i]) + "\n"))
 
 
 # This should be called in empress_cli.py when the user already supplied the DTL values
-def reconcile_noninter(tree_data: _ReconInput, duplication: float, transfer: float, loss: float, csv: str):
-    """ 
+def reconcile_noninter(
+    tree_data: _ReconInput, duplication: float, transfer: float, loss: float, csv: str
+):
+    """
     :param tree_data <_ReconInput> : Output of newickFormatReader.getInput()
     """
-    host, parasite, graph, num_recon, best_roots = reconcile(tree_data, duplication, transfer, loss)
+    host, parasite, graph, num_recon, best_roots = reconcile(
+        tree_data, duplication, transfer, loss
+    )
     for i in [host, parasite, graph, num_recon, best_roots]:
-        print((str(i) + '\n'))
+        print((str(i) + "\n"))
+
 
 def node_search_order(graph, roots):
     extant_nodes = roots[:]
@@ -579,13 +600,22 @@ def node_search_order(graph, roots):
         for e in events:
             e_child1 = e[1]
             e_child2 = e[2]
-            if e_child1 is not None and e_child1 != (None, None) and e_child1 not in processed_nodes:
+            if (
+                e_child1 is not None
+                and e_child1 != (None, None)
+                and e_child1 not in processed_nodes
+            ):
                 processed_nodes.add(e_child1)
                 extant_nodes.append(e_child1)
-            if e_child2 is not None and e_child2 != (None, None) and e_child2 not in processed_nodes:
+            if (
+                e_child2 is not None
+                and e_child2 != (None, None)
+                and e_child2 not in processed_nodes
+            ):
                 processed_nodes.add(e_child2)
                 extant_nodes.append(e_child2)
         yield node
+
 
 def event_str(event_type):
     if event_type == "C":
@@ -601,7 +631,14 @@ def event_str(event_type):
     else:
         assert False, "Invalid event type: {}".format(event_type)
 
-def export_csv(filename: str, graph: int, best_roots: list, event_freqs: Dict[tuple, float], node_freqs: Dict[tuple, float]):
+
+def export_csv(
+    filename: str,
+    graph: int,
+    best_roots: list,
+    event_freqs: Dict[tuple, float],
+    node_freqs: Dict[tuple, float],
+):
     with open(filename, "w") as csvfile:
         w = csv.writer(csvfile)
         for node in node_search_order(graph, best_roots):

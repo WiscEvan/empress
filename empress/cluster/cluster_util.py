@@ -15,9 +15,9 @@ def graph_union(g1, g2):
     :return newg <recon_graph> - the unioned graph
     """
     newg = {}
-    for k,v in g1.items():
+    for k, v in g1.items():
         newg[k] = v[:]
-    for k,v in g2.items():
+    for k, v in g2.items():
         if k in newg:
             for e in v:
                 if e not in newg[k]:
@@ -26,6 +26,7 @@ def graph_union(g1, g2):
             newg[k] = v[:]
     return newg
 
+
 def graph_is_subset(g1, g2):
     """
     True iff g1 is a subset of g2
@@ -33,13 +34,14 @@ def graph_is_subset(g1, g2):
     :params g1, g2 <recon_graph> - the graphs to check
     :return <bool>
     """
-    for k,v in g1.items():
+    for k, v in g1.items():
         if k not in g2:
             return False
         for e in v:
             if e not in g2[k]:
                 return False
     return True
+
 
 def assert_pairwise_nonsub(gs):
     """
@@ -51,6 +53,7 @@ def assert_pairwise_nonsub(gs):
             if i2 > i1:
                 gis = graph_is_subset(g1, g2) or graph_is_subset(g2, g1)
                 assert not gis
+
 
 def graph_sub(g, root):
     """
@@ -80,11 +83,12 @@ def graph_sub(g, root):
                 finished.add(m2)
     return newg
 
+
 # Split at higher depth until we have at least n MPRs
 # Use full_split_n instead since there may be multiple roots.
-#NOTE: UNUSED
+# NOTE: UNUSED
 def graph_split_n(g, root, n, mpr_count):
-    depth=1
+    depth = 1
     while True:
         gs = graph_split(g, root, depth)
         if len(gs) >= n:
@@ -94,6 +98,7 @@ def graph_split_n(g, root, n, mpr_count):
             break
         depth += 1
     return gs
+
 
 def graph_split(g, root, depth):
     """
@@ -116,18 +121,19 @@ def graph_split(g, root, depth):
             if m1 == (None, None):
                 l = [{}]
             else:
-                l = graph_split(g, m1, depth-1)
+                l = graph_split(g, m1, depth - 1)
             # In case e is a loss
             if m2 == (None, None):
                 r = [{}]
             else:
-                r = graph_split(g, m2, depth-1)
+                r = graph_split(g, m2, depth - 1)
             # Merge each pair of child graphs through the event
             for lg, rg in itertools.product(l, r):
                 newg = graph_union(lg, rg)
                 newg[root] = [(e, m1, m2)]
                 gs.append(newg)
         return gs
+
 
 # Split at higher depth until n mprs are found
 def full_split_n(g, gene_root, n, mpr_count):
@@ -139,7 +145,7 @@ def full_split_n(g, gene_root, n, mpr_count):
     :param mpr_count <int> - the number of MPRs in g. Used to determine if n splits can even be found.
     :return gs [<recon_graph>] - the final set of splits
     """
-    depth=1
+    depth = 1
     while True:
         gs = full_split(g, gene_root, depth)
         if len(gs) >= n:
@@ -148,8 +154,9 @@ def full_split_n(g, gene_root, n, mpr_count):
         elif len(gs) == mpr_count:
             break
         depth += 1
-    #print(("Depth: {}".format(depth)))
+    # print(("Depth: {}".format(depth)))
     return gs
+
 
 def full_split(g, gene_root, depth):
     """
@@ -162,11 +169,12 @@ def full_split(g, gene_root, depth):
     """
     # Find the mapping nodes involving the gene root
     roots = [k for k in list(g.keys()) if k[0] == gene_root]
-    #TODO: if the top node is lost, then that loss will not be a root
+    # TODO: if the top node is lost, then that loss will not be a root
     split_gs = [graph_split(g, r, depth) for r in roots]
     # Flatten
-    f = functools.reduce(lambda a, b: a+b, split_gs, [])
+    f = functools.reduce(lambda a, b: a + b, split_gs, [])
     return f
+
 
 # These functions are used to re-index the DP tables.
 # The reasoning behind this is as follows - We are doing many operations on a list of graphs
@@ -185,6 +193,7 @@ def new_dp(dp, m1, m2):
     :param m2 <int> - the second ""
     :return newdp <dict int->a > - the new DP table
     """
+
     # The new index corresponding to i if the elements at m1 and m2 are removed
     def new_index(i):
         if i < m1:
@@ -194,12 +203,14 @@ def new_dp(dp, m1, m2):
         elif i > m2:
             return i - 2
         assert False
+
     newdp = {}
     for i, dist in dp.items():
         # update the index for each index that does not involve m1 or m2
         if i not in [m1, m2]:
             newdp[new_index(i)] = dist
     return newdp
+
     # The new index corresponding to i if the elements at m1 and m2 are removed
     def new_index(i):
         if i < m1:
@@ -209,12 +220,14 @@ def new_dp(dp, m1, m2):
         elif i > m2:
             return i - 2
         assert False
+
     newdp = {}
     for i, dist in dp.items():
         # update the index for each index that does not involve m1 or m2
         if i not in [m1, m2]:
             newdp[new_index(i)] = dist
     return newdp
+
 
 def new_u_dp(u_dp, m1, m2):
     """
@@ -224,6 +237,7 @@ def new_u_dp(u_dp, m1, m2):
     :param m2 <int> - the second ""
     :return newdp <dict (int, int)->a> - the new DP table
     """
+
     # The new index corresponding to i if the elements at m1 and m2 are removed
     def new_index(i):
         if i < m1:
@@ -233,6 +247,7 @@ def new_u_dp(u_dp, m1, m2):
         elif i > m2:
             return i - 2
         assert False
+
     newdp = {}
     for pair, dist in u_dp.items():
         i1, i2 = pair
@@ -240,6 +255,7 @@ def new_u_dp(u_dp, m1, m2):
         if i1 not in [m1, m2] and i2 not in [m1, m2]:
             newdp[(new_index(i1), new_index(i2))] = dist
     return newdp
+
 
 def get_score_vals(graphs, g_score, score_dp, nmprs_dp, mpr_counter):
     """
@@ -267,6 +283,7 @@ def get_score_vals(graphs, g_score, score_dp, nmprs_dp, mpr_counter):
         weighted_score += score * nmprs
         total_nmprs += nmprs
     return weighted_score, total_nmprs
+
 
 def get_score_vals_ignore(graphs, g_score, score_dp, nmprs_dp, mpr_counter, i1, i2):
     """
@@ -300,6 +317,7 @@ def get_score_vals_ignore(graphs, g_score, score_dp, nmprs_dp, mpr_counter, i1, 
         total_nmprs += nmprs
     return weighted_score, total_nmprs
 
+
 def get_score(graphs, g_score, score_dp, nmprs_dp, mpr_counter):
     """
     Compute the weighted average score.
@@ -310,8 +328,11 @@ def get_score(graphs, g_score, score_dp, nmprs_dp, mpr_counter):
     :param mpr_counter <function: graph->int> - counts the number of MPRs for a graph
     :return <float> - the weighted average score for graphs
     """
-    weighted_score, total_nmprs = get_score_vals(graphs, g_score, score_dp, nmprs_dp, mpr_counter)
+    weighted_score, total_nmprs = get_score_vals(
+        graphs, g_score, score_dp, nmprs_dp, mpr_counter
+    )
     return weighted_score / float(total_nmprs)
+
 
 def get_score_nodp(graphs, g_score, mpr_counter):
     """
@@ -333,7 +354,10 @@ def get_score_nodp(graphs, g_score, mpr_counter):
         total_nmprs += nmprs
     return weighted_score / float(total_nmprs)
 
-def get_score_merge_indices(graphs, g_score, score_dp, score_u_dp, nmprs_dp, nmprs_u_dp, mpr_counter, i1, i2):
+
+def get_score_merge_indices(
+    graphs, g_score, score_dp, score_u_dp, nmprs_dp, nmprs_u_dp, mpr_counter, i1, i2
+):
     """
     Calculate the WAS (weighted average support) for graphs but assuming that i1 and i2 are merged.
     Used to calculate which pair is the best to merge in combine.
@@ -352,8 +376,9 @@ def get_score_merge_indices(graphs, g_score, score_dp, score_u_dp, nmprs_dp, nmp
         at i1 and i2 is calculated as though they were merged into one graph.
     """
     # Calculate the weighted score without the pair to be merged
-    weighted_score, total_nmprs = get_score_vals_ignore(graphs, g_score, score_dp, nmprs_dp, \
-                                                        mpr_counter, i1, i2)
+    weighted_score, total_nmprs = get_score_vals_ignore(
+        graphs, g_score, score_dp, nmprs_dp, mpr_counter, i1, i2
+    )
     # Add in the score for the pair
     pair = (i1, i2)
     if pair in score_u_dp and pair in nmprs_u_dp:
@@ -369,6 +394,7 @@ def get_score_merge_indices(graphs, g_score, score_dp, score_u_dp, nmprs_dp, nmp
     weighted_score += u_score * u_nmprs
     total_nmprs += u_nmprs
     return weighted_score / float(total_nmprs)
+
 
 def get_local_score(i1, i2, score_u_dp, score_dp, nmprs_dp):
     """
@@ -396,6 +422,7 @@ def get_local_score(i1, i2, score_u_dp, score_dp, nmprs_dp):
     unmerged_WAS = unmerged_score / float(unmerged_nmprs)
     return (unmerged_WAS, merged_WAS)
 
+
 def combine(split_gs, g_score, k, mpr_counter):
     """
     Take a set of graph splits and cluster them by minimizing the WAS at every iteration.
@@ -422,11 +449,22 @@ def combine(split_gs, g_score, k, mpr_counter):
     score_u_dp = {}
     # Key - (i1, i2), value - number of mprs in g1 u g2
     nmprs_u_dp = {}
+
     # Compute the "distance" between two indices in the graphs table
     # Smaller distance is better since smaller score is better
     def distance(i1, i2):
-        return get_score_merge_indices(split_gs, g_score,
-            score_dp, score_u_dp, nmprs_dp, nmprs_u_dp, mpr_counter, i1, i2)
+        return get_score_merge_indices(
+            split_gs,
+            g_score,
+            score_dp,
+            score_u_dp,
+            nmprs_dp,
+            nmprs_u_dp,
+            mpr_counter,
+            i1,
+            i2,
+        )
+
     # Merge until there are k (or fewer) splits
     while len(split_gs) > k:
         # Find a pair to merge via smallest distance
@@ -456,15 +494,15 @@ def combine(split_gs, g_score, k, mpr_counter):
         gm2 = split_gs.pop(min_i1)
         gu = graph_union(gm1, gm2)
         split_gs.append(gu)
-        
-        #Debug:
-        #dm1 = score_dp[(min_i1, min_i1)]
-        #dm2 = score_dp[(min_i2, min_i2)]
-        #du = min_dist * mpr_counter(gu)
-        #print("Merge {} and {} to get {}".format(dm1, dm2, du))
-        #print("MPR counts {}, {} -> {}".format(mpr_counter(gm1), mpr_counter(gm2), mpr_counter(gu)))
-        #print("Is subset: {}".format(graph_is_subset(gm1, gm2) or graph_is_subset(gm2, gm1)))
-        #print("Graph sizes {}, {} -> {}".format(len(gm1), len(gm2), len(gu)))
+
+        # Debug:
+        # dm1 = score_dp[(min_i1, min_i1)]
+        # dm2 = score_dp[(min_i2, min_i2)]
+        # du = min_dist * mpr_counter(gu)
+        # print("Merge {} and {} to get {}".format(dm1, dm2, du))
+        # print("MPR counts {}, {} -> {}".format(mpr_counter(gm1), mpr_counter(gm2), mpr_counter(gu)))
+        # print("Is subset: {}".format(graph_is_subset(gm1, gm2) or graph_is_subset(gm2, gm1)))
+        # print("Graph sizes {}, {} -> {}".format(len(gm1), len(gm2), len(gu)))
 
         # Fix up the DP tables now that the list is re-indexed
         # Entries involving gm1 and gm2 are removed and those distances will be
@@ -479,6 +517,7 @@ def combine(split_gs, g_score, k, mpr_counter):
     # Reverse scores so that the first index of scores is the score for k clusters,
     # the second is for k+1 clusters, etc.
     return split_gs, scores[::-1], local_scores[::-1]
+
 
 def cluster_graph_n(graph, gene_root, score, n, mpr_count, k, max_splits=None):
     """
@@ -503,6 +542,7 @@ def cluster_graph_n(graph, gene_root, score, n, mpr_count, k, max_splits=None):
     # Then recombine those splits until we have k graphs
     return combine(gs, score, k, mpr_counter)
 
+
 def cluster_graph(graph, gene_root, distance, depth, k, max_splits=None):
     """
     Find k clusters within MPRs of g using a depth-splitting method
@@ -519,9 +559,11 @@ def cluster_graph(graph, gene_root, distance, depth, k, max_splits=None):
     # Then recombine those splits until we have k graphs
     return combine(gs, distance, k, mpr_counter)
 
-#TODO: this can be improved by keeping the partial DP table around.
+
+# TODO: this can be improved by keeping the partial DP table around.
 # Since the graphs are always the same below a certain level, preserving the table below that level
 # would mean less repeated computation.
+
 
 def mk_pdv_score(species_tree, gene_tree, gene_root):
     """
@@ -535,10 +577,15 @@ def mk_pdv_score(species_tree, gene_tree, gene_root):
     :param gene_root <node>
     :return score <function recon_graph->float>
     """
+
     def score(g):
-        hist = histogram_alg.diameter_algorithm(species_tree, gene_tree, gene_root, g, g, False, False)
+        hist = histogram_alg.diameter_algorithm(
+            species_tree, gene_tree, gene_root, g, g, False, False
+        )
         return hist.mean()
+
     return score
+
 
 def avg_event_support(species_tree, gene_tree, g, gene_root):
     """
@@ -550,14 +597,18 @@ def avg_event_support(species_tree, gene_tree, g, gene_root):
     :return <float> - the average event support in g
     """
     # Compute the event support for each event
-    preorder_mapping_nodes = median.mapping_node_sort(gene_tree, species_tree, list(g.keys()))
-    _, event_support, _ = \
-        median.generate_frequencies_dict(list(reversed(preorder_mapping_nodes)), g, gene_root)
+    preorder_mapping_nodes = median.mapping_node_sort(
+        gene_tree, species_tree, list(g.keys())
+    )
+    _, event_support, _ = median.generate_frequencies_dict(
+        list(reversed(preorder_mapping_nodes)), g, gene_root
+    )
     # Take the average over each event
     total_support = 0
     for support in event_support.values():
         total_support += support
     return total_support / len(event_support)
+
 
 def mk_support_score(species_tree, gene_tree, gene_root):
     """
@@ -570,12 +621,15 @@ def mk_support_score(species_tree, gene_tree, gene_root):
     :param gene_root <node>
     :return score <function recon_graph->float>
     """
+
     def score(g):
         support = avg_event_support(species_tree, gene_tree, g, gene_root)
         # Higher support means closer, so take the reciprocal.
-        #return 1.0 / support
+        # return 1.0 / support
         return -1 * support
+
     return score
+
 
 def mk_get_pdv_hist(species_tree, gene_tree, gene_root):
     """
@@ -586,10 +640,15 @@ def mk_get_pdv_hist(species_tree, gene_tree, gene_root):
     :param gene_root <node>
     :return get_hist <function recon_graph->dict int->int>
     """
+
     def get_hist(g):
-        h = histogram_alg.diameter_algorithm(species_tree, gene_tree, gene_root, g, g, False, False)
+        h = histogram_alg.diameter_algorithm(
+            species_tree, gene_tree, gene_root, g, g, False, False
+        )
         return h.histogram_dict
+
     return get_hist
+
 
 def event_support_hist(species_tree, gene_tree, gene_root, graph):
     """
@@ -602,19 +661,26 @@ def event_support_hist(species_tree, gene_tree, gene_root, graph):
     :return hist <array float> - fraction of events for each bin
     :return bins <array float> - RHS of each bin (see numpy.histogram)
     """
-    preorder_mapping_nodes = median.mapping_node_sort(gene_tree, species_tree, list(graph.keys()))
-    _, event_support, _ = \
-        median.generate_frequencies_dict(list(reversed(preorder_mapping_nodes)), graph, gene_root)
+    preorder_mapping_nodes = median.mapping_node_sort(
+        gene_tree, species_tree, list(graph.keys())
+    )
+    _, event_support, _ = median.generate_frequencies_dict(
+        list(reversed(preorder_mapping_nodes)), graph, gene_root
+    )
     supports = list(event_support.values())
-    hist, bins = np.histogram(supports, bins=20, range=(0,1))
+    hist, bins = np.histogram(supports, bins=20, range=(0, 1))
     total = np.sum(hist)
     return hist / float(total), bins
 
+
 def mk_get_support_hist(species_tree, gene_tree, gene_root):
-    """ Same as mk_get_pdv_hist but for the event support histogram. """
+    """Same as mk_get_pdv_hist but for the event support histogram."""
+
     def get_hist(g):
         return event_support_hist(species_tree, gene_tree, gene_root, g)
+
     return get_hist
+
 
 # Create a function that counts the number of mprs
 def mk_count_mprs(gene_root):
@@ -624,11 +690,14 @@ def mk_count_mprs(gene_root):
     :param gene_root <node>
     :return count_mprs <function recon_graph->int>
     """
+
     def count_mprs(g):
         # Find the mapping nodes involving the gene root
         roots = [k for k in list(g.keys()) if k[0] == gene_root]
         return recongraph_tools.count_mprs_wrapper(roots, g)
+
     return count_mprs
+
 
 def calc_improvement(big_k, little_k):
     # For Event Support
@@ -641,7 +710,8 @@ def calc_improvement(big_k, little_k):
             return float("inf")
     return big_k / float(little_k)
     # For PDV
-    #return little_k / float(big_k)
+    # return little_k / float(big_k)
+
 
 # For Event Support
 def calc_improvement_support(big_k, little_k):
@@ -654,6 +724,7 @@ def calc_improvement_support(big_k, little_k):
     """
     return big_k / float(little_k)
 
+
 # For PDV
 def calc_improvement_pdv(big_k, little_k):
     """
@@ -662,7 +733,8 @@ def calc_improvement_pdv(big_k, little_k):
     """
     return little_k / float(big_k)
 
-def get_tree_info(newick, d,t,l):
+
+def get_tree_info(newick, d, t, l):
     """
     Reconcile the trees and return all the relevant info.
     :param newick <_ReconInput>: Output of newickFormatReader.getInput()
@@ -675,11 +747,18 @@ def get_tree_info(newick, d,t,l):
     :return best_roots [<mapping_node>] - the sources of the recon graph
     """
     # From the newick tree create the reconciliation graph
-    edge_species_tree, edge_gene_tree, dtl_recon_graph, mpr_count, best_roots \
-        = recongraph_tools.reconcile(newick, d, t, l)
+    (
+        edge_species_tree,
+        edge_gene_tree,
+        dtl_recon_graph,
+        mpr_count,
+        best_roots,
+    ) = recongraph_tools.reconcile(newick, d, t, l)
     # Reformat the host and parasite tree to use it with the histogram algorithm
-    gene_tree, gene_root, gene_node_count = diameter.reformat_tree(edge_gene_tree, "pTop")
-    species_tree, species_tree_root, species_node_count \
-        = diameter.reformat_tree(edge_species_tree, "hTop")
+    gene_tree, gene_root, gene_node_count = diameter.reformat_tree(
+        edge_gene_tree, "pTop"
+    )
+    species_tree, species_tree_root, species_node_count = diameter.reformat_tree(
+        edge_species_tree, "hTop"
+    )
     return gene_tree, species_tree, gene_root, dtl_recon_graph, mpr_count, best_roots
-

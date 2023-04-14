@@ -6,8 +6,10 @@ from Bio import Phylo
 
 from pathlib import Path
 
+
 class ReconInputError(Exception):
     pass
+
 
 class _ReconInput:
     """
@@ -15,8 +17,14 @@ class _ReconInput:
     Distances encode branch lengths in the newick file, if given
     """
 
-    def __init__(self, host_dict=None, host_distances=None, parasite_dict=None,
-                 parasite_distances=None, tip_mapping=None):
+    def __init__(
+        self,
+        host_dict=None,
+        host_distances=None,
+        parasite_dict=None,
+        parasite_distances=None,
+        tip_mapping=None,
+    ):
         if tip_mapping is not None:
             _ReconInput._verify_tip_mapping(host_dict, parasite_dict, tip_mapping)
         self.host_dict = host_dict
@@ -34,7 +42,11 @@ class _ReconInput:
         return recon_input
 
     def is_complete(self):
-        return self.host_dict is not None and self.parasite_dict is not None and self.tip_mapping is not None
+        return (
+            self.host_dict is not None
+            and self.parasite_dict is not None
+            and self.tip_mapping is not None
+        )
 
     def read_host(self, file_name: str):
         """
@@ -42,19 +54,25 @@ class _ReconInput:
         :param file_name <str>    - filename of host file to parse
         """
         try:
-            self.host_dict, self.host_distances = _ReconInput._read_newick_tree(file_name, "host")
+            self.host_dict, self.host_distances = _ReconInput._read_newick_tree(
+                file_name, "host"
+            )
         except Exception as e:
             raise ReconInputError("cannot read host file %s: %s" % (file_name, str(e)))
-  
+
     def read_parasite(self, file_name: str):
         """
         Takes a parasite filename as input and sets self.parasite_dict and self_host_distances
         :param file_name <str>   - filename of parasite file to parse
         """
         try:
-            self.parasite_dict, self.parasite_distances = _ReconInput._read_newick_tree(file_name, "parasite")
+            self.parasite_dict, self.parasite_distances = _ReconInput._read_newick_tree(
+                file_name, "parasite"
+            )
         except Exception as e:
-            raise ReconInputError("cannot read parasite file %s: %s" % (file_name, str(e)))
+            raise ReconInputError(
+                "cannot read parasite file %s: %s" % (file_name, str(e))
+            )
 
     def read_mapping(self, file_name: str):
         """
@@ -65,21 +83,29 @@ class _ReconInput:
             raise ReconInputError("mapping file_name %s is not a string" % file_name)
 
         if self.host_dict is None:
-            raise ReconInputError("attempt to read tip mapping before reading host tree")
+            raise ReconInputError(
+                "attempt to read tip mapping before reading host tree"
+            )
 
         if self.parasite_dict is None:
-            raise ReconInputError("attempt to read tip mapping before reading parasite tree")
+            raise ReconInputError(
+                "attempt to read tip mapping before reading parasite tree"
+            )
 
         try:
             with open(file_name) as map_file:
                 map_list = map_file.read().split()
                 tip_mapping = _ReconInput._parse_tip_mapping(map_list)
-                _ReconInput._verify_tip_mapping(self.host_dict, self.parasite_dict, tip_mapping)
+                _ReconInput._verify_tip_mapping(
+                    self.host_dict, self.parasite_dict, tip_mapping
+                )
                 self.tip_mapping = tip_mapping
         except Exception as e:
             raise ReconInputError("cannot read mapping file %s:" % file_name + str(e))
 
-    def save_to_files(self, host_fname: str, parasite_fname: str, tip_mapping_fname: str):
+    def save_to_files(
+        self, host_fname: str, parasite_fname: str, tip_mapping_fname: str
+    ):
         _ReconInput._save_newick_tree_to_file(self.host_dict, host_fname)
         _ReconInput._save_newick_tree_to_file(self.parasite_dict, parasite_fname)
         _ReconInput._save_tip_mapping_to_file(self.tip_mapping, tip_mapping_fname)
@@ -87,31 +113,35 @@ class _ReconInput:
     @staticmethod
     def _save_newick_tree_to_file(tree_dict, fname):
         if Path(fname).suffix not in [".tree", ".nwk", ".newick"]:
-            raise ReconInputError("Newick file name %s does not end with .tree, .nwk, or .newick" % fname)
+            raise ReconInputError(
+                "Newick file name %s does not end with .tree, .nwk, or .newick" % fname
+            )
 
-        root_name = 'hTop' if 'hTop' in tree_dict else 'pTop'
+        root_name = "hTop" if "hTop" in tree_dict else "pTop"
         tree_dict_str = _ReconInput._tree_dict_to_str(tree_dict, root_name)
-        with open(fname, 'w') as f:
+        with open(fname, "w") as f:
             print(tree_dict_str, file=f)
 
     @staticmethod
     def _tree_dict_to_str(tree_dict, root):
         parent, child, left_edge, right_edge = tree_dict[root]
-        if left_edge is None: # tip
+        if left_edge is None:  # tip
             return child
         else:
             return "({},{}){}".format(
                 _ReconInput._tree_dict_to_str(tree_dict, left_edge),
                 _ReconInput._tree_dict_to_str(tree_dict, right_edge),
-                child
+                child,
             )
 
     @staticmethod
     def _save_tip_mapping_to_file(tip_mapping: dict, fname: str):
         if Path(fname).suffix != ".mapping":
-            raise ReconInputError("Mapping file name %s does not end with .mapping" % fname)
+            raise ReconInputError(
+                "Mapping file name %s does not end with .mapping" % fname
+            )
 
-        with open(fname, 'w') as f:
+        with open(fname, "w") as f:
             for parasite_node, host_node in tip_mapping.items():
                 print("%s:%s" % (parasite_node, host_node), file=f)
 
@@ -147,14 +177,16 @@ class _ReconInput:
             D[name] = dist
         dfs_list = [(node.name, float(D[node.name])) for node in tree.find_clades()]
         tree_dict = {}
-        _ReconInput._build_tree_dictionary(_ReconInput._build_tree(dfs_list), "Top", tree_dict, tree_type)
+        _ReconInput._build_tree_dictionary(
+            _ReconInput._build_tree(dfs_list), "Top", tree_dict, tree_type
+        )
         real_distances = tree.depths()
         real_distance_dict = {}
         for clade in real_distances:
             name = clade.name
             real_distance_dict[name] = dist
         return tree_dict, real_distance_dict
-    
+
     @staticmethod
     def _name_unnamed_nodes(tree: Phylo.Newick.Tree, tree_type: str):
         count = 0
@@ -185,8 +217,8 @@ class _ReconInput:
             root_name = dfs_list[0][0]
             dist = dfs_list[0][1]
             split_point = 0
-            for x in range(len(dfs_list)-1, 0, -1):
-                if dfs_list[x][1] == dist+1:
+            for x in range(len(dfs_list) - 1, 0, -1):
+                if dfs_list[x][1] == dist + 1:
                     split_point = x
                     break
             left_list = dfs_list[1:split_point]
@@ -265,9 +297,12 @@ class _ReconInput:
         for parasite in tip_mapping_dict:
             host = tip_mapping_dict[parasite]
             if host not in host_leaves:
-                raise ReconInputError("Mapping %s [parasite] -> %s [host] found but %s is not in host tree" %
-                               (parasite, host, host))
+                raise ReconInputError(
+                    "Mapping %s [parasite] -> %s [host] found but %s is not in host tree"
+                    % (parasite, host, host)
+                )
             if parasite not in parasite_leaves:
-                raise ReconInputError("Mapping %s [parasite] -> %s [host] found but %s is not in parasite tree" %
-                               (parasite, host, parasite))
-
+                raise ReconInputError(
+                    "Mapping %s [parasite] -> %s [host] found but %s is not in parasite tree"
+                    % (parasite, host, parasite)
+                )

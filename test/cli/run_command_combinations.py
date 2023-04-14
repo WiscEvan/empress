@@ -12,17 +12,42 @@ example_mapping = "examples/heliconius_mapping.mapping"
 list_of_commands = ["cost-regions", "reconcile", "histogram", "cluster"]
 options_for_reconcile = ["-d", "-t", "-l", "--csv", "--graph"]
 options_for_cost_regions = ["-dl", "-tl", "-dh", "-th", "--log", "--outfile"]
-options_for_histogram = ["-d", "-t", "-l", "--histogram", "--xnorm", "--ynorm", "--omit-zeros", "--cumulative",
-                         "--csv", "--stats", "--time"]
-options_for_cluster = ["-d", "-t", "-l", "--medians", "--depth", "--n-splits", "--pdv-vis", "--support-vis",
-                       "--pdv", "--support"]
+options_for_histogram = [
+    "-d",
+    "-t",
+    "-l",
+    "--histogram",
+    "--xnorm",
+    "--ynorm",
+    "--omit-zeros",
+    "--cumulative",
+    "--csv",
+    "--stats",
+    "--time",
+]
+options_for_cluster = [
+    "-d",
+    "-t",
+    "-l",
+    "--medians",
+    "--depth",
+    "--n-splits",
+    "--pdv-vis",
+    "--support-vis",
+    "--pdv",
+    "--support",
+]
 options_for_pvalue = ["-d", "-t", "-l", "--outfile", "--n-samples"]
 options_for_tanglegram = ["--outfile"]
+
 
 # copied from https://docs.python.org/3/library/itertools.html#itertools-recipes
 def powerset(iterable):
     s = list(iterable)
-    return itertools.chain.from_iterable(itertools.combinations(s, r) for r in range(len(s)+1))
+    return itertools.chain.from_iterable(
+        itertools.combinations(s, r) for r in range(len(s) + 1)
+    )
+
 
 def input_value(option):
     """Compute an input value for the optional argument"""
@@ -32,7 +57,7 @@ def input_value(option):
     elif option in ["-dl", "-tl"]:
         # default value for this option is 1
         return "2"
-    elif option in ["-dh","-th"]:
+    elif option in ["-dh", "-th"]:
         # default value for this option is 5
         return "10"
     elif option == "--csv":
@@ -48,6 +73,7 @@ def input_value(option):
         return "50"
     else:
         return None
+
 
 def run_command(command: str, n_tests: int, fail_fast=True):
     """
@@ -78,7 +104,16 @@ def run_command(command: str, n_tests: int, fail_fast=True):
 
     for selected_options in total_combinations:
         # example command : pipenv run python empress_cli.py reconcile <host_file> <parasite_file> <mapping_file>
-        command_args = ["pipenv", "run", "python", cli_filename, command, example_host, example_parasite, example_mapping]
+        command_args = [
+            "pipenv",
+            "run",
+            "python",
+            cli_filename,
+            command,
+            example_host,
+            example_parasite,
+            example_mapping,
+        ]
         for option in selected_options:
             command_args.append(option)
             if input_value(option) is not None:
@@ -97,7 +132,10 @@ def run_command(command: str, n_tests: int, fail_fast=True):
             # we must select only one from "--depth" and "--n-splits"
             if "--depth" in selected_options and "--n-splits" in selected_options:
                 continue
-            if "--depth" not in selected_options and "--n-splits" not in selected_options:
+            if (
+                "--depth" not in selected_options
+                and "--n-splits" not in selected_options
+            ):
                 continue
         # Run the command, if pass, pass silently. Print the commands that fail
         completed_process = subprocess.run(command_args, capture_output=True)
@@ -105,10 +143,10 @@ def run_command(command: str, n_tests: int, fail_fast=True):
             if n_failed_tests == 0:
                 print("Failed Test(s):")
             print("$", *command_args)
-            output_str = completed_process.stdout.decode('utf-8').strip()
+            output_str = completed_process.stdout.decode("utf-8").strip()
             if output_str:
                 print(output_str)
-            error_str = completed_process.stderr.decode('utf-8').strip()
+            error_str = completed_process.stderr.decode("utf-8").strip()
             if error_str:
                 print(error_str)
             n_failed_tests += 1
@@ -116,13 +154,20 @@ def run_command(command: str, n_tests: int, fail_fast=True):
                 break
 
     if n_failed_tests == 0:
-        print("All %s %d/%d tests passed" % (command, len(total_combinations), len(total_combinations)))
+        print(
+            "All %s %d/%d tests passed"
+            % (command, len(total_combinations), len(total_combinations))
+        )
     elif not fail_fast:
-        print("%d/%d %s tests failed" % (n_failed_tests, len(total_combinations), command))
+        print(
+            "%d/%d %s tests failed" % (n_failed_tests, len(total_combinations), command)
+        )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="empress_cli tester for generating and running combination or arguments")
+        description="empress_cli tester for generating and running combination or arguments"
+    )
     parser.add_argument("tests_per_group", type=int)
     args = parser.parse_args()
 

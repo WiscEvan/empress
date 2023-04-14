@@ -31,7 +31,10 @@ import numpy as np
 
 from empress.reconcile import recongraph_tools, diameter
 
-def mapping_node_sort(ordered_gene_node_list, ordered_species_node_list, mapping_node_list):
+
+def mapping_node_sort(
+    ordered_gene_node_list, ordered_species_node_list, mapping_node_list
+):
     """
     :param ordered_gene_node_list: an ordered dictionary of the gene nodes, where each key is a node
     and the corresponding values are children of that node in the gene tree. Note that the order (pre-
@@ -63,12 +66,17 @@ def mapping_node_sort(ordered_gene_node_list, ordered_species_node_list, mapping
     # The lambda function looks up the level of both the gene node and the species nodes and adds them together to
     # get a number to give to the sorting algorithm for that mapping node. The gene node is weighted far more heavily
     # than the species node to make sure it is always more significant.
-    sorted_list = sorted(mapping_node_list, key=lambda node: gene_level_lookup[node[0]] + species_level_lookup[node[1]])
+    sorted_list = sorted(
+        mapping_node_list,
+        key=lambda node: gene_level_lookup[node[0]] + species_level_lookup[node[1]],
+    )
 
     return sorted_list
 
 
-def generate_frequencies_dict(preorder_mapping_node_list, recon_graph, gene_root, normalize=True):
+def generate_frequencies_dict(
+    preorder_mapping_node_list, recon_graph, gene_root, normalize=True
+):
     """
     Computes frequencies for every event
     :param preorder_mapping_node_list: A list of all mapping nodes in DTLReconGraph in double preorder
@@ -89,7 +97,6 @@ def generate_frequencies_dict(preorder_mapping_node_list, recon_graph, gene_root
     # Loop over all given minimum cost reconciliation roots
     for mapping_node in preorder_mapping_node_list:
         if mapping_node[0] == gene_root:
-
             # This will also populate the counts dictionary with the number of MPRs each event and mapping node is in
             count += count_mprs(mapping_node, recon_graph, counts)
 
@@ -112,14 +119,17 @@ def generate_frequencies_dict(preorder_mapping_node_list, recon_graph, gene_root
         if mapping_node[0] == gene_root:
             node_frequencies[mapping_node] = counts[mapping_node]
         # This fills up the event frequency dictionary
-        calculate_event_frequencies_for_children(mapping_node, recon_graph, event_frequencies, node_frequencies,
-                                                 counts)
+        calculate_event_frequencies_for_children(
+            mapping_node, recon_graph, event_frequencies, node_frequencies, counts
+        )
 
     if normalize:
         # Normalize all of the event_frequencies by the number of MPRs
         # so that each frequency is out of 1
         for mapping_node in preorder_mapping_node_list:
-            node_frequencies[mapping_node] = node_frequencies[mapping_node] / float(count)
+            node_frequencies[mapping_node] = node_frequencies[mapping_node] / float(
+                count
+            )
             for event in recon_graph[mapping_node]:
                 event_frequencies[event] = event_frequencies[event] / float(count)
 
@@ -153,14 +163,14 @@ def count_mprs(mapping_node, recon_graph, counts):
 
     # Loop over all event nodes corresponding to the current mapping node
     for eventNode in recon_graph[mapping_node]:
-
         # Save the children produced by the current event
         mapping_child1 = eventNode[1]
         mapping_child2 = eventNode[2]
 
         # Add the product of the counts of both children (over all children) for this event to get the parent's count
-        counts[eventNode] = count_mprs(mapping_child1, recon_graph, counts) * count_mprs(mapping_child2,
-                                                                                         recon_graph, counts)
+        counts[eventNode] = count_mprs(
+            mapping_child1, recon_graph, counts
+        ) * count_mprs(mapping_child2, recon_graph, counts)
         count += counts[eventNode]
 
     # Save the result in the counts
@@ -169,7 +179,9 @@ def count_mprs(mapping_node, recon_graph, counts):
     return count
 
 
-def calculate_event_frequencies_for_children(mapping_node, dtl_recon_graph, event_frequencies, node_frequencies, counts):
+def calculate_event_frequencies_for_children(
+    mapping_node, dtl_recon_graph, event_frequencies, node_frequencies, counts
+):
     """
     This function calculates the frequency for every mapping node that is a child of an event node that is a
     child of the given mapping node, and stores them in dtl_recon_graph.
@@ -183,7 +195,9 @@ def calculate_event_frequencies_for_children(mapping_node, dtl_recon_graph, even
     :return: Nothing, but frequencies are built up.
     """
 
-    assert node_frequencies[mapping_node] != 0, "Sorting error! Ensure that parents are calculated before children"
+    assert (
+        node_frequencies[mapping_node] != 0
+    ), "Sorting error! Ensure that parents are calculated before children"
 
     # This multiplier results in  counts[event_node] / counts[mapping_node] for each event node, which is the % of
     # this mapping node's frequencies (node_frequencies[mapping_node]) that it gives to each event node.
@@ -191,7 +205,6 @@ def calculate_event_frequencies_for_children(mapping_node, dtl_recon_graph, even
 
     # Iterate over every event
     for event_node in dtl_recon_graph[mapping_node]:
-
         event_frequencies[event_node] = multiplier * counts[event_node]
 
         # Save the children produced by the current event
@@ -201,7 +214,9 @@ def calculate_event_frequencies_for_children(mapping_node, dtl_recon_graph, even
         node_frequencies[mapping_child2] += event_frequencies[event_node]
 
 
-def compute_median(dtl_recon_graph, event_frequencies, postorder_mapping_nodes, mpr_roots):
+def compute_median(
+    dtl_recon_graph, event_frequencies, postorder_mapping_nodes, mpr_roots
+):
     """
     :param dtl_recon_graph: A dictionary representing a DTL Recon Graph.
     :param event_frequencies: A dictionary with event nodes as keys and values corresponding to the frequency of
@@ -226,22 +241,35 @@ def compute_median(dtl_recon_graph, event_frequencies, postorder_mapping_nodes, 
 
     # Loop over all mapping nodes for the gene tree
     for map_node in postorder_mapping_nodes:
-
         # Contemporaneous events need to be caught from the get-go
-        if dtl_recon_graph[map_node] == [('C', (None, None), (None, None))]:
-            sum_freqs[map_node] = ([('C', (None, None), (None, None))], 0.5)  # C events have freq 1, so 1 - 0.5 = 0.5
+        if dtl_recon_graph[map_node] == [("C", (None, None), (None, None))]:
+            sum_freqs[map_node] = (
+                [("C", (None, None), (None, None))],
+                0.5,
+            )  # C events have freq 1, so 1 - 0.5 = 0.5
             continue  # Contemporaneous events should be a lone event in a list, so we move to the next mapping node
 
         # Get the events for the current mapping node and their running (frequency - 0.5) sums, in a list
         events = list()
         for event in dtl_recon_graph[map_node]:
-
             # Note that 'event' is of the form: ('event ID', 'Child 1', 'Child 2'), so the 0th element is the event
             # ID and the 1st and 2nd elements are the children produced by the event
-            if event[0] == 'L':  # Losses produce only one child, so we only need to look to one lower mapping node
-                events.append((event, sum_freqs[event[1]][1] + event_frequencies[event] - 0.5))
+            if (
+                event[0] == "L"
+            ):  # Losses produce only one child, so we only need to look to one lower mapping node
+                events.append(
+                    (event, sum_freqs[event[1]][1] + event_frequencies[event] - 0.5)
+                )
             else:  # Only other options are T, S, and D, which produce two children
-                events.append((event, sum_freqs[event[1]][1] + sum_freqs[event[2]][1] + event_frequencies[event] - 0.5))
+                events.append(
+                    (
+                        event,
+                        sum_freqs[event[1]][1]
+                        + sum_freqs[event[2]][1]
+                        + event_frequencies[event]
+                        - 0.5,
+                    )
+                )
 
         # Find and save the max (frequency - 0.5) sum
         max_sum = max(events, key=itemgetter(1))[1]
@@ -274,9 +302,10 @@ def compute_median(dtl_recon_graph, event_frequencies, postorder_mapping_nodes, 
 
     # Adjust the sum_freqs dictionary so we can use it with the buildDTLReconGraph function from recongraph_tools.py
     for map_node in sum_freqs:
-
         # We place the event tuples into lists so they work well with the diameter algorithm
-        sum_freqs[map_node] = sum_freqs[map_node][0]  # Only use the events, no longer the associated frequency sum
+        sum_freqs[map_node] = sum_freqs[map_node][
+            0
+        ]  # Only use the events, no longer the associated frequency sum
 
     # Use the buildDTLReconGraph function from recongraph_tools.py to find the median recon graph
     # Note that build_dtl... requires a list of the best roots for a reconciliation graph, the events for each
@@ -285,7 +314,9 @@ def compute_median(dtl_recon_graph, event_frequencies, postorder_mapping_nodes, 
     med_recon_graph = recongraph_tools.build_dtl_recon_graph(best_roots, sum_freqs, {})
 
     # Check to make sure the median is a subgraph of the DTL reconciliation
-    assert check_subgraph(dtl_recon_graph, med_recon_graph), 'Median is not a subgraph of the recon graph!'
+    assert check_subgraph(
+        dtl_recon_graph, med_recon_graph
+    ), "Median is not a subgraph of the recon graph!"
 
     # We can use this function to find the number of medians once we've got the final median recon graph
     n_med_recons = recongraph_tools.count_mprs_wrapper(best_roots, med_recon_graph)
@@ -303,12 +334,10 @@ def check_subgraph(recon_graph, subrecon):
 
     # Loop over all mapping nodes contained in the median reconciliation graph
     for map_node in subrecon:
-
         # Loop over mapping nodes
         if map_node not in recon_graph:
             return False
         else:
-
             # Now events for a given mapping node
             for event in subrecon[map_node]:
                 if event not in recon_graph[map_node]:
@@ -333,8 +362,12 @@ def choose_random_median_wrapper(median_recon, med_roots, count_dict):
     # Create the choice list for the roots we can choose from, weighted to account for median
     # counts each root can produce
     # Note that numpy is so basic that we need to do a convoluted workaround to choose tuples from a list
-    final_root = med_roots[np.random.choice(len(med_roots), p=[count_dict[med_root] / total_meds for med_root in
-                                                               med_roots])]
+    final_root = med_roots[
+        np.random.choice(
+            len(med_roots),
+            p=[count_dict[med_root] / total_meds for med_root in med_roots],
+        )
+    ]
 
     return choose_random_median(median_recon, final_root, count_dict)
 
@@ -359,24 +392,35 @@ def choose_random_median(median_recon, map_node, count_dict):
 
     # Use a convoluted numpy workaround to select tuples (events) from a list, taking into account
     # how many medians each event can produce
-    next_event = median_recon[map_node][np.random.choice(len(median_recon[map_node]),
-                                                         p=[count_dict[event] / total_meds for event in
-                                                            median_recon[map_node]])]
+    next_event = median_recon[map_node][
+        np.random.choice(
+            len(median_recon[map_node]),
+            p=[count_dict[event] / total_meds for event in median_recon[map_node]],
+        )
+    ]
 
     random_submedian.update({map_node: [next_event]})
 
     # Check for a loss
-    if next_event[0] == 'L':
-        random_submedian.update(choose_random_median(median_recon, next_event[1], count_dict))
+    if next_event[0] == "L":
+        random_submedian.update(
+            choose_random_median(median_recon, next_event[1], count_dict)
+        )
 
     # Check for events that produce two children
-    elif next_event[0] in ['T', 'S', 'D']:
-        random_submedian.update(choose_random_median(median_recon, next_event[1], count_dict))
-        random_submedian.update(choose_random_median(median_recon, next_event[2], count_dict))
+    elif next_event[0] in ["T", "S", "D"]:
+        random_submedian.update(
+            choose_random_median(median_recon, next_event[1], count_dict)
+        )
+        random_submedian.update(
+            choose_random_median(median_recon, next_event[2], count_dict)
+        )
 
     # Make sure our single path median is indeed a subgraph of the median
-    assert check_subgraph(median_recon, random_submedian), 'The randomly chosen single-path median is not a subgraph ' \
-                                                           'of the full median!'
+    assert check_subgraph(median_recon, random_submedian), (
+        "The randomly chosen single-path median is not a subgraph "
+        "of the full median!"
+    )
 
     return random_submedian
 
@@ -386,19 +430,27 @@ def usage():
     :return: the usage statement associated with running this file
     """
 
-    return 'usage: DTLMedian filename dup_cost transfer_cost loss_cost [-r] [-n]'
+    return "usage: DTLMedian filename dup_cost transfer_cost loss_cost [-r] [-n]"
 
-def get_median_graph(recon_graph, postorder_gene_tree, postorder_species_tree, gene_tree_root, best_roots):
+
+def get_median_graph(
+    recon_graph, postorder_gene_tree, postorder_species_tree, gene_tree_root, best_roots
+):
     # Get a list of the mapping nodes in preorder
-    postorder_mapping_node_list = mapping_node_sort(postorder_gene_tree, postorder_species_tree,
-                                                    list(recon_graph.keys()))
+    postorder_mapping_node_list = mapping_node_sort(
+        postorder_gene_tree, postorder_species_tree, list(recon_graph.keys())
+    )
     # Find the dictionary for frequencies for the given mapping nodes and graph, and the given gene root
-    _, event_frequencies, _ = generate_frequencies_dict(postorder_mapping_node_list[::-1], recon_graph, gene_tree_root)
+    _, event_frequencies, _ = generate_frequencies_dict(
+        postorder_mapping_node_list[::-1], recon_graph, gene_tree_root
+    )
 
     # Now find the median and related info
-    median_graph, n_meds, roots_for_median = compute_median(recon_graph, event_frequencies,
-                                                            postorder_mapping_node_list, best_roots)
+    median_graph, n_meds, roots_for_median = compute_median(
+        recon_graph, event_frequencies, postorder_mapping_node_list, best_roots
+    )
     return median_graph, n_meds, roots_for_median
+
 
 def get_med_counts(median_reconciliation, roots_for_median):
     # Initialize the dictionary that tells us how many medians can be spawned from a particular event node
@@ -408,4 +460,3 @@ def get_med_counts(median_reconciliation, roots_for_median):
     for root in roots_for_median:
         count_mprs(root, median_reconciliation, med_counts)
     return med_counts
-

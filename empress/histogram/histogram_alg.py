@@ -57,7 +57,7 @@ def cost(event, zero_loss):
     :return <int>             - the cost
     """
 
-    if zero_loss and event[0] == 'L':
+    if zero_loss and event[0] == "L":
         return 0
     return 1
 
@@ -84,24 +84,23 @@ def calculate_ancestral_table(species_tree):
     vertices = [vertex for vertex in species_tree]
 
     # Initialize all entries to incomparable to make following calculations easier
-    for A, B in list(product(vertices, vertices)):  # Cartesian product of all of the vertices
-
+    for A, B in list(
+        product(vertices, vertices)
+    ):  # Cartesian product of all of the vertices
         # Check if we need to make a dictionary for the first vertex
         if A not in ancestral_table:
             ancestral_table[A] = dict()
 
         # Set all identical pairs to equal while we're in this loop - check for equality here
         if A == B:
-            ancestral_table[A][B] = 'eq'
+            ancestral_table[A][B] = "eq"
 
         else:
-
             # Set all other pairs to incomparable
-            ancestral_table[A][B] = 'in'
+            ancestral_table[A][B] = "in"
 
     # Now loop over all vertex pairs checking for ancestral connections
     for v in vertices:
-
         # Save the vertices that represent the children into variables
         child1 = species_tree[v][0]
         child2 = species_tree[v][1]
@@ -111,14 +110,15 @@ def calculate_ancestral_table(species_tree):
             descendants[v] = []  # Empty list --> no descendants
 
         else:
-
             # The descendants of a node are the direct children and those children's children, and so on
-            descendants[v] = descendants[child1] + descendants[child2] + [child1] + [child2]
+            descendants[v] = (
+                descendants[child1] + descendants[child2] + [child1] + [child2]
+            )
 
             # Assign relationship between a node and its descendants, and vice versa
             for descendant in descendants[v]:
-                ancestral_table[v][descendant] = 'an'
-                ancestral_table[descendant][v] = 'des'
+                ancestral_table[v][descendant] = "an"
+                ancestral_table[descendant][v] = "des"
 
     return ancestral_table
 
@@ -137,11 +137,13 @@ def is_exit_event(event):
     :param event <tuple>   - an event to check
     :return <bool>         - whether said event is an exit event
     """
-    return event[0] not in ('C', 'L')
+    return event[0] not in ("C", "L")
 
 
 # Modified : use Histogram instead of value
-def calculate_hist_both_exit(zero_loss, enter_table, u, gene_tree, uA, dtl_recon_graph_a, uB, dtl_recon_graph_b):
+def calculate_hist_both_exit(
+    zero_loss, enter_table, u, gene_tree, uA, dtl_recon_graph_a, uB, dtl_recon_graph_b
+):
     """
     This function computes the histogram of a 'double exit', where both mapping nodes exit immediately
     :param zero_loss <bool>           - a boolean value representing whether loss events should count for distance
@@ -158,11 +160,19 @@ def calculate_hist_both_exit(zero_loss, enter_table, u, gene_tree, uA, dtl_recon
 
     # Test to see if u is a leaf
     if is_leaf(u, gene_tree):
-        if uA == uB and ('C', (None, None), (None, None)) in dtl_recon_graph_a[uA]:
+        if uA == uB and ("C", (None, None), (None, None)) in dtl_recon_graph_a[uA]:
             hist_both_exit = Histogram(0)
     else:
-        uA_exit_events = [event for event in dtl_recon_graph_a[uA] if isinstance(event, tuple) and is_exit_event(event)]
-        uB_exit_events = [event for event in dtl_recon_graph_b[uB] if isinstance(event, tuple) and is_exit_event(event)]
+        uA_exit_events = [
+            event
+            for event in dtl_recon_graph_a[uA]
+            if isinstance(event, tuple) and is_exit_event(event)
+        ]
+        uB_exit_events = [
+            event
+            for event in dtl_recon_graph_b[uB]
+            if isinstance(event, tuple) and is_exit_event(event)
+        ]
         for e_a in uA_exit_events:
             child1 = e_a[1][0]
             child2 = e_a[2][0]
@@ -201,7 +211,9 @@ def calculate_hist_both_exit(zero_loss, enter_table, u, gene_tree, uA, dtl_recon
                 # Do the convolution between left and right, then shift based on the difference of the events
                 this_hist = left_entry.product_combine(right_entry, n_choices)
                 if e_a != e_b:
-                    this_hist = this_hist << (cost(e_a, zero_loss) + cost(e_b, zero_loss))
+                    this_hist = this_hist << (
+                        cost(e_a, zero_loss) + cost(e_b, zero_loss)
+                    )
                 else:
                     this_hist = this_hist << intersect_cost(0)
                 # Final histogram is the sum over all event pairs
@@ -209,8 +221,9 @@ def calculate_hist_both_exit(zero_loss, enter_table, u, gene_tree, uA, dtl_recon
     return hist_both_exit
 
 
-def calculate_incomparable_enter_hist(zero_loss, enter_table, u, uA, uA_loss_events, uB, uB_loss_events,
-                                       hist_both_exit):
+def calculate_incomparable_enter_hist(
+    zero_loss, enter_table, u, uA, uA_loss_events, uB, uB_loss_events, hist_both_exit
+):
     """
     Returns the enter table entry for [uA][uB] with the assumption that A is on a different part of the species
     tree from B
@@ -246,8 +259,18 @@ def calculate_incomparable_enter_hist(zero_loss, enter_table, u, uA, uA_loss_eve
     return Histogram.sum(hists) - Histogram.sum(lost_hists)
 
 
-def calculate_equal_enter_hist(zero_loss, enter_table, u, uA, uA_loss_events, uB, uB_loss_events,
-                                hist_both_exit, exit_table_a, exit_table_b):
+def calculate_equal_enter_hist(
+    zero_loss,
+    enter_table,
+    u,
+    uA,
+    uA_loss_events,
+    uB,
+    uB_loss_events,
+    hist_both_exit,
+    exit_table_a,
+    exit_table_b,
+):
     """
     Returns the enter table entry for [uA][uB] with the assumption that uA equals uB (but they might have different
     loss events leading from them!)
@@ -263,10 +286,12 @@ def calculate_equal_enter_hist(zero_loss, enter_table, u, uA, uA_loss_events, uB
                                           the mapping nodes' children
     :param exit_table_b <dict>          - the b exit table, which contains information about the single exit events for
                                           the mapping nodes' children
-    :return <Histogram>                 - the enter table entry for [uA][uB]  
+    :return <Histogram>                 - the enter table entry for [uA][uB]
     """
     # If uA does not equal uB, then something's gone horribly wrong.
-    assert uA == uB, "calculate_equal_enter_hist called on values of uA and uB that are not equal"
+    assert (
+        uA == uB
+    ), "calculate_equal_enter_hist called on values of uA and uB that are not equal"
 
     # Build up a list of the possible histograms of this pair of mapping nodes, so that we can find the maximum later.
     hists = [hist_both_exit]
@@ -289,8 +314,19 @@ def calculate_equal_enter_hist(zero_loss, enter_table, u, uA, uA_loss_events, uB
     return Histogram.sum(hists)
 
 
-def calculate_ancestral_enter_hist(zero_loss, is_swapped, enter_table, u, uA, uA_loss_events, uB, uB_loss_events,
-                                    hist_both_exit, exit_table_a, exit_table_b):
+def calculate_ancestral_enter_hist(
+    zero_loss,
+    is_swapped,
+    enter_table,
+    u,
+    uA,
+    uA_loss_events,
+    uB,
+    uB_loss_events,
+    hist_both_exit,
+    exit_table_a,
+    exit_table_b,
+):
     """
     Returns the enter table entry for [uA][uB] with the assumption that A is an ancestor of B (if is_swapped is
     false) or that B is an ancestor of A (if is_swapped is true). In both cases, it will compute the single exit
@@ -358,7 +394,7 @@ def calculate_ancestral_enter_hist(zero_loss, is_swapped, enter_table, u, uA, uA
         if uB not in exit_table_b[u]:
             exit_table_b[u][uB] = {}
         exit_table_b[u][uB][uA] = Histogram.sum(hists)
-        
+
         enter_hists = [exit_table_b[u][uB][uA]]
         for event in uB_loss_events:
             b_child = event[1][1]
@@ -385,11 +421,23 @@ def make_group_dict(gene_tree, dtl_recon_graph, postorder_species_nodes):
         postorder_group[u] = [mapping for mapping in dtl_recon_graph if mapping[0] == u]
         # Then we sort the dictionary into postorder, using the species node's index in the postorder species list as a
         # guide.
-        postorder_group[u] = sorted(postorder_group[u], key=lambda mapping: postorder_species_nodes.index(mapping[1]))
+        postorder_group[u] = sorted(
+            postorder_group[u],
+            key=lambda mapping: postorder_species_nodes.index(mapping[1]),
+        )
     return postorder_group
 
 
-def diameter_algorithm(species_tree, gene_tree, gene_tree_root, dtl_recon_graph_a, dtl_recon_graph_b, debug, zero_loss, verify=False):
+def diameter_algorithm(
+    species_tree,
+    gene_tree,
+    gene_tree_root,
+    dtl_recon_graph_a,
+    dtl_recon_graph_b,
+    debug,
+    zero_loss,
+    verify=False,
+):
     """
     This function finds the diameter of a reconciliation graph, as measured by the largest symmetric set difference
      of any two reconciliation trees inside of a reconciliation graph. While you can get standard diameter behaviour
@@ -408,14 +456,18 @@ def diameter_algorithm(species_tree, gene_tree, gene_tree_root, dtl_recon_graph_
     """
 
     # Use debugging
-    #assert(dtl_recon_graph_a == dtl_recon_graph_b)
+    # assert(dtl_recon_graph_a == dtl_recon_graph_b)
     if verify:
         verfier = BFVerifier(dtl_recon_graph_a)
 
     postorder_gene_nodes = list(gene_tree.keys())
     postorder_species_nodes = list(species_tree.keys())
-    postorder_group_a = make_group_dict(gene_tree, dtl_recon_graph_a, postorder_species_nodes)
-    postorder_group_b = make_group_dict(gene_tree, dtl_recon_graph_b, postorder_species_nodes)
+    postorder_group_a = make_group_dict(
+        gene_tree, dtl_recon_graph_a, postorder_species_nodes
+    )
+    postorder_group_b = make_group_dict(
+        gene_tree, dtl_recon_graph_b, postorder_species_nodes
+    )
 
     ancestral_table = calculate_ancestral_table(species_tree)
 
@@ -436,39 +488,101 @@ def diameter_algorithm(species_tree, gene_tree, gene_tree_root, dtl_recon_graph_
         for uA in postorder_group_a[u]:
             enter_table[u][uA] = {}
             for uB in postorder_group_b[u]:
-
-                hist_both_exit = calculate_hist_both_exit(zero_loss, enter_table, u, gene_tree, uA, dtl_recon_graph_a,
-                                                            uB, dtl_recon_graph_b)
+                hist_both_exit = calculate_hist_both_exit(
+                    zero_loss,
+                    enter_table,
+                    u,
+                    gene_tree,
+                    uA,
+                    dtl_recon_graph_a,
+                    uB,
+                    dtl_recon_graph_b,
+                )
 
                 # Look up ancestry string in the precomputed table (indexed by the species nodes of the mapping nodes)
-                ancestry = ancestral_table[uA[1]][uB[1]] 
+                ancestry = ancestral_table[uA[1]][uB[1]]
 
-                uA_loss_events = [event for event in dtl_recon_graph_a[uA] if isinstance(event, tuple) and event[0] == 'L']
-                uB_loss_events = [event for event in dtl_recon_graph_b[uB] if isinstance(event, tuple) and event[0] == 'L']
+                uA_loss_events = [
+                    event
+                    for event in dtl_recon_graph_a[uA]
+                    if isinstance(event, tuple) and event[0] == "L"
+                ]
+                uB_loss_events = [
+                    event
+                    for event in dtl_recon_graph_b[uB]
+                    if isinstance(event, tuple) and event[0] == "L"
+                ]
 
                 # To compute the proper single exit entry, we must know how the two nodes relate to each other. See the
                 # header for a more complete explanation on this data structure.
-                if ancestry == 'in':
-                    hist = calculate_incomparable_enter_hist(zero_loss, enter_table, u, uA, uA_loss_events, uB,
-                                                               uB_loss_events, hist_both_exit)
-                elif ancestry == 'eq':
-                    hist = calculate_equal_enter_hist(zero_loss, enter_table, u, uA, uA_loss_events, uB,
-                                                        uB_loss_events, hist_both_exit, exit_table_a, exit_table_b)
+                if ancestry == "in":
+                    hist = calculate_incomparable_enter_hist(
+                        zero_loss,
+                        enter_table,
+                        u,
+                        uA,
+                        uA_loss_events,
+                        uB,
+                        uB_loss_events,
+                        hist_both_exit,
+                    )
+                elif ancestry == "eq":
+                    hist = calculate_equal_enter_hist(
+                        zero_loss,
+                        enter_table,
+                        u,
+                        uA,
+                        uA_loss_events,
+                        uB,
+                        uB_loss_events,
+                        hist_both_exit,
+                        exit_table_a,
+                        exit_table_b,
+                    )
                 # The only difference between the 'des' and 'an' cases are whether the nodes should be swapped
-                elif ancestry == 'des':
-                    hist = calculate_ancestral_enter_hist(zero_loss, True, enter_table, u, uA, uA_loss_events, uB,
-                                                            uB_loss_events, hist_both_exit, exit_table_a, exit_table_b)
-                elif ancestry == 'an':
-                    hist = calculate_ancestral_enter_hist(zero_loss, False, enter_table, u, uA, uA_loss_events, uB,
-                                                            uB_loss_events, hist_both_exit, exit_table_a, exit_table_b)
+                elif ancestry == "des":
+                    hist = calculate_ancestral_enter_hist(
+                        zero_loss,
+                        True,
+                        enter_table,
+                        u,
+                        uA,
+                        uA_loss_events,
+                        uB,
+                        uB_loss_events,
+                        hist_both_exit,
+                        exit_table_a,
+                        exit_table_b,
+                    )
+                elif ancestry == "an":
+                    hist = calculate_ancestral_enter_hist(
+                        zero_loss,
+                        False,
+                        enter_table,
+                        u,
+                        uA,
+                        uA_loss_events,
+                        uB,
+                        uB_loss_events,
+                        hist_both_exit,
+                        exit_table_a,
+                        exit_table_b,
+                    )
                 else:
-                    raise ValueError("Invalid ancestry type '{0}', check calculate_ancestral_table().".format(ancestry))
+                    raise ValueError(
+                        "Invalid ancestry type '{0}', check calculate_ancestral_table().".format(
+                            ancestry
+                        )
+                    )
                 if verify:
                     verfier.verify_enter(uA, uB, hist)
                 enter_table[u][uA][uB] = hist
                 if debug:
-                    print("{0} -{1}-> {2}, Double-equal\t{3}\Hist:{4}".format(uA, ancestry, uB, hist_both_exit,
-                                                                                hist))
+                    print(
+                        "{0} -{1}-> {2}, Double-equal\t{3}\Hist:{4}".format(
+                            uA, ancestry, uB, hist_both_exit, hist
+                        )
+                    )
 
         if debug:
             print_table_nicely(enter_table[u], ", ", "EnterTable({0})".format(u))
@@ -481,7 +595,7 @@ def diameter_algorithm(species_tree, gene_tree, gene_tree_root, dtl_recon_graph_
     result = Histogram(None)
     for uA in enter_table[gene_tree_root]:
         for uB in enter_table[gene_tree_root][uA]:
-            if uB > uA :
+            if uB > uA:
                 continue
             entry = enter_table[gene_tree_root][uA][uB]
             result = result + entry
@@ -489,8 +603,13 @@ def diameter_algorithm(species_tree, gene_tree, gene_tree_root, dtl_recon_graph_
 
 
 def event_to_string(event):
-    return "{0}:{1}{2} {3}{4}".format(str(event[0]), str(event[1][0]), str(event[1][1]),
-                                      str(event[2][0]), str(event[2][1]))
+    return "{0}:{1}{2} {3}{4}".format(
+        str(event[0]),
+        str(event[1][0]),
+        str(event[1][1]),
+        str(event[2][0]),
+        str(event[2][1]),
+    )
 
 
 def print_table_nicely(table, deliminator, name="\t", dtype="map"):
@@ -506,7 +625,11 @@ def print_table_nicely(table, deliminator, name="\t", dtype="map"):
 
     print("")
     if len(table) > 30:  # Don't spend too long displaying tables.
-        print("Table '{1}' is {0}x{0}, which is bigger than the max size of 30.".format(len(table), name))
+        print(
+            "Table '{1}' is {0}x{0}, which is bigger than the max size of 30.".format(
+                len(table), name
+            )
+        )
         return
 
     line = "\033[4m{0}\033[1m".format(name)  # Underline top row, bold column headers
@@ -525,14 +648,18 @@ def print_table_nicely(table, deliminator, name="\t", dtype="map"):
         row_num += 1
         line_color = "\033[37m" if row_num % 2 == 0 else "\033[0m"
 
-        line = line_color + "\t\033[4m\033[1m"  # Add bolding and underline to row headers
+        line = (
+            line_color + "\t\033[4m\033[1m"
+        )  # Add bolding and underline to row headers
         if dtype == "event":
             line += "{0}".format(event_to_string(row))
         elif dtype == "literal":
             line += "{0}".format(row)
         else:
             line += "{0}{1}{2}".format(str(row[0]), deliminator, str(row[1]))
-        line += "\033[0m\t" + line_color  # Remove bolding for entries, then return to line color
+        line += (
+            "\033[0m\t" + line_color
+        )  # Remove bolding for entries, then return to line color
         for column in table[row]:
             if row == column:
                 line += "\033[33m"  # Highlight diagonals

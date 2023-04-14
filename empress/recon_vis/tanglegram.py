@@ -17,14 +17,15 @@ EXTRA_SPACING_FOR_LABEL = 50
 _g_host_counter = 0
 _g_parasite_counter = 0
 
+
 def render(
     host_dict: dict,
     parasite_dict: dict,
     tip_mapping: dict,
     show_internal_labels: bool,
     ax: plt.Axes = None,
-    node_font_size = 9,
-    ) -> plot_tools.FigureWrapper:
+    node_font_size=9,
+) -> plot_tools.FigureWrapper:
     """
     Render tanglegram
     :param host_dict - host tree (dictionary representation)
@@ -33,7 +34,7 @@ def render(
     :param show_internal_labels - boolean indicator of whether internal node names should
         be displayed
     :param ax - draw on Axes instead if available
-    :return FigureWrapper object 
+    :return FigureWrapper object
     """
     global _g_host_counter
     global _g_parasite_counter
@@ -44,16 +45,16 @@ def render(
     host_tree = utils.dict_to_tree(host_dict, tree.TreeType.HOST)
     parasite_tree = utils.dict_to_tree(parasite_dict, tree.TreeType.PARASITE)
     _render_helper_host(
-        fig=fig, 
-        node=host_tree.root_node, 
-        show_internal_labels=show_internal_labels, 
-        node_font_size=node_font_size
+        fig=fig,
+        node=host_tree.root_node,
+        show_internal_labels=show_internal_labels,
+        node_font_size=node_font_size,
     )
     _render_helper_parasite(
-        fig=fig, 
-        node=parasite_tree.root_node, 
+        fig=fig,
+        node=parasite_tree.root_node,
         show_internal_labels=show_internal_labels,
-        node_font_size=node_font_size
+        node_font_size=node_font_size,
     )
 
     host_dict = {}
@@ -64,9 +65,14 @@ def render(
     for leaf in parasite_tree.leaf_list():
         parasite = leaf
         host = host_dict[tip_mapping[leaf.name]]
-        fig.line((host.layout.col, host.layout.row), (parasite.layout.col, parasite.layout.row),
-                 col=render_settings.GRAY, linestyle='--')
+        fig.line(
+            (host.layout.col, host.layout.row),
+            (parasite.layout.col, parasite.layout.row),
+            col=render_settings.GRAY,
+            linestyle="--",
+        )
     return fig
+
 
 def _render_helper_host(fig, node, show_internal_labels, node_font_size):
     """
@@ -74,7 +80,6 @@ def _render_helper_host(fig, node, show_internal_labels, node_font_size):
     """
     global _g_host_counter
     if node.is_leaf():
-
         # set up layout for node (will be used later for drawing lines between nodes)
         leaf_layout = tree.NodeLayout()
         leaf_layout.col = -VERTICAL_OFFSET
@@ -85,7 +90,13 @@ def _render_helper_host(fig, node, show_internal_labels, node_font_size):
 
         # plot node using leaf_layout
         plot_loc = (leaf_layout.col, leaf_layout.row)
-        fig.text(plot_loc, node.name, size=node_font_size, col=render_settings.BLUE, h_a='right')
+        fig.text(
+            plot_loc,
+            node.name,
+            size=node_font_size,
+            col=render_settings.BLUE,
+            h_a="right",
+        )
 
     else:
         # recursively call helper function on child nodes
@@ -108,17 +119,31 @@ def _render_helper_host(fig, node, show_internal_labels, node_font_size):
         # plot node using node_layout
         current_loc = (node.layout.col, node.layout.row)
         if show_internal_labels:
-            fig.text(current_loc, node.name, size=node_font_size, col=render_settings.BLUE, h_a='left')
+            fig.text(
+                current_loc,
+                node.name,
+                size=node_font_size,
+                col=render_settings.BLUE,
+                h_a="left",
+            )
 
         # draw line from current node to left node
         left_loc = (left_layout.col, left_layout.row)
-        fig.line(current_loc, (node.layout.col, left_layout.row), col=render_settings.BLACK)
-        fig.line((node.layout.col, left_layout.row), left_loc, col=render_settings.BLACK)
+        fig.line(
+            current_loc, (node.layout.col, left_layout.row), col=render_settings.BLACK
+        )
+        fig.line(
+            (node.layout.col, left_layout.row), left_loc, col=render_settings.BLACK
+        )
 
         # draw line from current node to right node
         right_loc = (right_layout.col, right_layout.row)
-        fig.line(current_loc, (node.layout.col, right_layout.row), col=render_settings.BLACK)
-        fig.line((node.layout.col, right_layout.row), right_loc, col=render_settings.BLACK)
+        fig.line(
+            current_loc, (node.layout.col, right_layout.row), col=render_settings.BLACK
+        )
+        fig.line(
+            (node.layout.col, right_layout.row), right_loc, col=render_settings.BLACK
+        )
 
 
 def _render_helper_parasite(fig, node, show_internal_labels, node_font_size):
@@ -137,12 +162,22 @@ def _render_helper_parasite(fig, node, show_internal_labels, node_font_size):
 
         # plot node using leaf_layout
         plot_loc = (leaf_layout.col, leaf_layout.row)
-        fig.text(plot_loc, node.name, size=node_font_size, col=render_settings.BLUE, h_a='left')
+        fig.text(
+            plot_loc,
+            node.name,
+            size=node_font_size,
+            col=render_settings.BLUE,
+            h_a="left",
+        )
 
     else:
         # recursively call helper funciton on child nodes
-        _render_helper_parasite(fig, node.left_node, show_internal_labels, node_font_size)
-        _render_helper_parasite(fig, node.right_node, show_internal_labels, node_font_size)
+        _render_helper_parasite(
+            fig, node.left_node, show_internal_labels, node_font_size
+        )
+        _render_helper_parasite(
+            fig, node.right_node, show_internal_labels, node_font_size
+        )
 
         # get layouts for child nodes to determine position of current node
         right_layout = node.right_node.layout
@@ -160,14 +195,28 @@ def _render_helper_parasite(fig, node, show_internal_labels, node_font_size):
         # plot node using node_layout
         current_loc = (node.layout.col, node.layout.row)
         if show_internal_labels:
-            fig.text(current_loc, node.name, size=node_font_size, col=render_settings.BLUE, h_a='right')
+            fig.text(
+                current_loc,
+                node.name,
+                size=node_font_size,
+                col=render_settings.BLUE,
+                h_a="right",
+            )
 
         # draw line from current node to left node
         left_loc = (left_layout.col, left_layout.row)
-        fig.line(current_loc, (node.layout.col, left_layout.row), col=render_settings.BLACK)
-        fig.line((node.layout.col, left_layout.row), left_loc, col=render_settings.BLACK)
+        fig.line(
+            current_loc, (node.layout.col, left_layout.row), col=render_settings.BLACK
+        )
+        fig.line(
+            (node.layout.col, left_layout.row), left_loc, col=render_settings.BLACK
+        )
 
         # draw line from current node to right node
         right_loc = (right_layout.col, right_layout.row)
-        fig.line(current_loc, (node.layout.col, right_layout.row), col=render_settings.BLACK)
-        fig.line((node.layout.col, right_layout.row), right_loc, col=render_settings.BLACK)
+        fig.line(
+            current_loc, (node.layout.col, right_layout.row), col=render_settings.BLACK
+        )
+        fig.line(
+            (node.layout.col, right_layout.row), right_loc, col=render_settings.BLACK
+        )

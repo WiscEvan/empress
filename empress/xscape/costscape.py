@@ -12,6 +12,7 @@ from empress import xscape
 from empress.xscape import reconcile
 from empress.xscape import plotcosts_analytic as plotcosts
 
+
 def solve(newick_data, transferMin, transferMax, dupMin, dupMax, outfile, log):
     print("Costscape %s" % xscape.PROGRAM_VERSION_TEXT)
     hostTree = newick_data.host_dict
@@ -20,12 +21,12 @@ def solve(newick_data, transferMin, transferMax, dupMin, dupMax, outfile, log):
 
     print("Reconciling trees...")
     startTime = time.time()
-    CVlist = reconcile.reconcile(parasiteTree, hostTree, tip_mapping,
-                                 transferMin, transferMax, dupMin, dupMax)
+    CVlist = reconcile.reconcile(
+        parasiteTree, hostTree, tip_mapping, transferMin, transferMax, dupMin, dupMax
+    )
     endTime = time.time()
     elapsedTime = endTime - startTime
     print("Elapsed time %.2f seconds" % elapsedTime)
-    plotcosts.plotcosts(CVlist, transferMin, transferMax, dupMin, dupMax,
-                        outfile, log)
+    plotcosts.plotcosts(CVlist, transferMin, transferMax, dupMin, dupMax, outfile, log)
     if outfile is not None:
         print("Output written to: ", outfile)

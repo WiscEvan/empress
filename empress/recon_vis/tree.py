@@ -5,38 +5,43 @@ Defines classes related to host and parasite nodes and trees
 
 from enum import IntEnum, Enum
 
+
 class TreeType(IntEnum):
-    """ Defines type of the tree """
+    """Defines type of the tree"""
+
     HOST = 1
     PARASITE = 2
+
 
 class Track(Enum):
     HORIZONTAL = 1
     LOWER_VERTICAL = 2
     UPPER_VERTICAL = 3
 
+
 class Node:
-    """ Defines a node of a tree """
+    """Defines a node of a tree"""
+
     def __init__(self, name):
-        self.name = name            # String; name of this host or parasite
-        self.left_node = None       # Node:  left child Node or None
-        self.right_node = None      # Node:  right child Node or None
-        self.parent_node = None     # Node:  parent Node or None
-        self.layout = None          # NodeLayout object: layout of this node
+        self.name = name  # String; name of this host or parasite
+        self.left_node = None  # Node:  left child Node or None
+        self.right_node = None  # Node:  right child Node or None
+        self.parent_node = None  # Node:  parent Node or None
+        self.layout = None  # NodeLayout object: layout of this node
 
     def is_leaf(self):
-        """ returns True iff this node is a leaf/tip of the tree """
+        """returns True iff this node is a leaf/tip of the tree"""
         return self.left_node is None and self.right_node is None
 
     def is_root(self):
-        """ returns True iff this node is the root of the tree """
+        """returns True iff this node is the root of the tree"""
         return self.parent_node is None
 
     def __repr__(self):
         return str(self.name)
 
     def get_layout(self):
-        """ returns the four values listed in NodeLayout"""
+        """returns the four values listed in NodeLayout"""
         layout = self.layout
         return layout.row, layout.col, layout.x, layout.y
 
@@ -53,46 +58,48 @@ class Node:
         if track == Track.HORIZONTAL:
             self.layout.h_track = self.layout.h_track + 1
             return self.layout.h_track - 1
-        
+
         if track == Track.UPPER_VERTICAL:
             self.layout.upper_v_track += 1
             return self.layout.upper_v_track - 1
-        
+
         if track == Track.LOWER_VERTICAL:
             self.layout.lower_v_track += 1
             return self.layout.lower_v_track - 1
-    
+
     def update_count(self):
-        self.layout.node_count += 1 
+        self.layout.node_count += 1
 
 
 class NodeLayout:
-    """ Defines node layout attributes for rendering """
+    """Defines node layout attributes for rendering"""
+
     def __init__(self):
-        self.row = None         # float: logical position of this Node in rendering
+        self.row = None  # float: logical position of this Node in rendering
 
         # The self.col can be generated from a topological ordering of the temporal constraint graph
-        self.col = None         # float: logical position of this Node in rendering
-        self.x = None           # float: x-coordinate for rendering
-        self.y = None           # float: y-coordinate for rendering
+        self.col = None  # float: logical position of this Node in rendering
+        self.x = None  # float: x-coordinate for rendering
+        self.y = None  # float: y-coordinate for rendering
         self.upper_v_track = 1  # float: track number for upper vertical host edges
         self.lower_v_track = 1  # float: track number for lower vertical host edges
-        self.h_track = 1        # int: track number for horizontal host edges
-        self.node_count = 0     # int: Number of nodes mapped to node
-        self.offset = 0         # int: Offset between tracks of a node
+        self.h_track = 1  # int: track number for horizontal host edges
+        self.node_count = 0  # int: Number of nodes mapped to node
+        self.offset = 0  # int: Offset between tracks of a node
 
 
 class Tree:
     """
     The Tree type defines a tree for use in rendering and other functions
     """
+
     def __init__(self):
-        self.root_node = None       # Node:  Root Node of the Tree
-        self.tree_type = None       # TreeType: HOST or PARASITE
+        self.root_node = None  # Node:  Root Node of the Tree
+        self.tree_type = None  # TreeType: HOST or PARASITE
         self.pos_dict = {}
 
     def leaf_list(self):
-        """ Returns list of leaf Nodes from left to right. """
+        """Returns list of leaf Nodes from left to right."""
         return self._leaf_list_helper(self.root_node)
 
     def _leaf_list_helper(self, node):
@@ -104,7 +111,7 @@ class Tree:
         return list1
 
     def postorder_list(self):
-        """ returns list of all Nodes in postorder """
+        """returns list of all Nodes in postorder"""
         return self._postorder_list_helper(self.root_node)
 
     def name_to_node_dict(self):

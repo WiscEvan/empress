@@ -5,6 +5,7 @@ from pathlib import Path
 from empress.histogram import histogram_alg, histogram_display
 from empress.reconcile import recongraph_tools, diameter
 
+
 def calc_histogram(tree_data, d, t, l, time_it, normalize=False, zero_loss=False):
     """
     Compute the PDV from a .newick file
@@ -20,23 +21,37 @@ def calc_histogram(tree_data, d, t, l, time_it, normalize=False, zero_loss=False
         None if time_it is False
     """
     # From the newick tree create the reconciliation graph
-    edge_species_tree, edge_gene_tree, dtl_recon_graph, mpr_count, best_roots \
-        = recongraph_tools.reconcile(tree_data, d, t, l)
+    (
+        edge_species_tree,
+        edge_gene_tree,
+        dtl_recon_graph,
+        mpr_count,
+        best_roots,
+    ) = recongraph_tools.reconcile(tree_data, d, t, l)
 
     # If we want to know the number of MPRs
-    #print(mpr_count)
+    # print(mpr_count)
 
     # Reformat the host and parasite tree to use it with the histogram algorithm
-    gene_tree, gene_tree_root, gene_node_count = diameter.reformat_tree(edge_gene_tree, "pTop")
-    species_tree, species_tree_root, species_node_count \
-        = diameter.reformat_tree(edge_species_tree, "hTop")
+    gene_tree, gene_tree_root, gene_node_count = diameter.reformat_tree(
+        edge_gene_tree, "pTop"
+    )
+    species_tree, species_tree_root, species_node_count = diameter.reformat_tree(
+        edge_species_tree, "hTop"
+    )
 
     if time_it:
         start = time.time()
     # Calculate the histogram via histogram algorithm
     diameter_alg_hist = histogram_alg.diameter_algorithm(
-        species_tree, gene_tree, gene_tree_root, dtl_recon_graph, dtl_recon_graph,
-        False, zero_loss)
+        species_tree,
+        gene_tree,
+        gene_tree_root,
+        dtl_recon_graph,
+        dtl_recon_graph,
+        False,
+        zero_loss,
+    )
     if time_it:
         end = time.time()
         elapsed = end - start
@@ -46,8 +61,9 @@ def calc_histogram(tree_data, d, t, l, time_it, normalize=False, zero_loss=False
     if normalize:
         # Number of internal gene tree nodes
         gene_tree_nodes = int(math.ceil(len(gene_tree) / 2.0))
-        diameter_alg_hist = diameter_alg_hist.xscale(1.0/(2*gene_tree_nodes))
+        diameter_alg_hist = diameter_alg_hist.xscale(1.0 / (2 * gene_tree_nodes))
     return diameter_alg_hist, elapsed
+
 
 def transform_hist(hist, omit_zeros, xnorm, ynorm, cumulative):
     """
@@ -92,6 +108,7 @@ def transform_hist(hist, omit_zeros, xnorm, ynorm, cumulative):
         hist_cum = hist_ynorm
     return hist_cum, width
 
+
 def compute_pdv(filename, tree_data, d, t, l, args):
     """
     Compute the PDV and other information and save them / output them
@@ -100,7 +117,7 @@ def compute_pdv(filename, tree_data, d, t, l, args):
     :param d <float> - the cost of a duplication
     :param t <float> - ^^ transfer
     :param l <float> - ^^ loss
-    :param args <ArgumentParser> - object that contains all parameters needed 
+    :param args <ArgumentParser> - object that contains all parameters needed
     to compute, save, and/or output the PDV
     """
     # if args.interactive:
@@ -118,11 +135,19 @@ def compute_pdv(filename, tree_data, d, t, l, args):
         print("Number of MPRs: {}".format(n_mprs))
         print("Diameter of MPR-space: {}".format(diameter))
         print("Mean MPR distance: {} with standard deviation {}".format(mean, std))
-    hist_new, width = transform_hist(hist, args.omit_zeros, args.xnorm, args.ynorm, args.cumulative)
+    hist_new, width = transform_hist(
+        hist, args.omit_zeros, args.xnorm, args.ynorm, args.cumulative
+    )
     # Make the histogram image
     if args.histogram_pdf is not None:
-        histogram_display.plot_histogram(args.histogram_pdf, hist, width, Path(args.host).stem,
-                                         args.dup_cost, args.trans_cost, args.loss_cost)
+        histogram_display.plot_histogram(
+            args.histogram_pdf,
+            hist,
+            width,
+            Path(args.host).stem,
+            args.dup_cost,
+            args.trans_cost,
+            args.loss_cost,
+        )
     if args.csv is not None:
         histogram_display.csv_histogram(args.csv, hist)
-

@@ -1,0 +1,20 @@
+name: empress
+channels:
+  - biobakery
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - numpy
+  - shapely
+  - matplotlib
+  - networkx
+  - pydot
+  - biopython
+  - ipython
+  - ca-certificates
+  - certifi
+  - openssl
+  - black
+  - ete3
+prefix: /home/evan/miniconda3/envs/empress

@@ -10,11 +10,12 @@ from typing import Dict, Tuple, List
 from collections import OrderedDict
 from enum import Enum
 
-__all__ = ['dict_to_tree', 'dict_to_reconciliation', 'build_trees_with_temporal_order']
+__all__ = ["dict_to_tree", "dict_to_reconciliation", "build_trees_with_temporal_order"]
 
 
 class ConsistencyType(Enum):
-    """ Defines type of the temporal consistency of a reconciliation """
+    """Defines type of the temporal consistency of a reconciliation"""
+
     STRONG_CONSISTENCY = 1
     WEAK_CONSISTENCY = 2
     NO_CONSISTENCY = 3
@@ -26,6 +27,7 @@ class ConsistencyType(Enum):
             return "Weak time-consistent"
         else:
             return "Not time-consistent"
+
 
 # Utility functions that covert from dictionaries to objects
 
@@ -66,6 +68,7 @@ def _dict_to_tree_helper(tree_dict, root_edge):
         new_right_node.parent_node = new_node
         return new_node
 
+
 # ReconGraph utilities
 
 
@@ -74,13 +77,13 @@ def _find_roots(old_recon_graph) -> List[recon.MappingNode]:
     for mapping in old_recon_graph:
         for event in old_recon_graph[mapping]:
             etype, left, right = event
-            if etype in 'SDT':
+            if etype in "SDT":
                 not_roots.add(left)
                 not_roots.add(right)
-            elif etype == 'L':
+            elif etype == "L":
                 child = left
                 not_roots.add(child)
-            elif etype == 'C':
+            elif etype == "C":
                 pass
             else:
                 raise ValueError('%s not in "SDTLC' % etype)
@@ -91,7 +94,9 @@ def _find_roots(old_recon_graph) -> List[recon.MappingNode]:
     return roots
 
 
-def dict_to_reconciliation(old_recon: Dict[Tuple, List], event_frequencies: Dict[tuple, float] = None):
+def dict_to_reconciliation(
+    old_recon: Dict[Tuple, List], event_frequencies: Dict[tuple, float] = None
+):
     """
     Convert the old reconciliation graph format to Reconciliation.
     Example of old format:
@@ -112,26 +117,26 @@ def dict_to_reconciliation(old_recon: Dict[Tuple, List], event_frequencies: Dict
     for mapping in old_recon:
         host, parasite = mapping
         if len(old_recon[mapping]) != 1:
-            raise ValueError('old_recon mapping node has no or multiple events')
+            raise ValueError("old_recon mapping node has no or multiple events")
         event_tuple = old_recon[mapping][0]
         etype, left, right = event_tuple
         mapping_node = recon.MappingNode(host, parasite)
-        if etype in 'SDT':
+        if etype in "SDT":
             left_parasite, left_host = left
             right_parasite, right_host = right
             left_mapping = recon.MappingNode(left_parasite, left_host)
             right_mapping = recon.MappingNode(right_parasite, right_host)
-            if etype == 'S':
+            if etype == "S":
                 event = recon.Cospeciation(left_mapping, right_mapping)
-            if etype == 'D':
+            if etype == "D":
                 event = recon.Duplication(left_mapping, right_mapping)
-            if etype == 'T':
+            if etype == "T":
                 event = recon.Transfer(left_mapping, right_mapping)
-        elif etype == 'L':
+        elif etype == "L":
             child_parasite, child_host = left
             child_mapping = recon.MappingNode(child_parasite, child_host)
             event = recon.Loss(child_mapping)
-        elif etype == 'C':
+        elif etype == "C":
             event = recon.TipTip()
         else:
             raise ValueError('%s not in "SDTLC"' % etype)
@@ -140,11 +145,13 @@ def dict_to_reconciliation(old_recon: Dict[Tuple, List], event_frequencies: Dict
         recon_obj.set_event(mapping_node, event)
     return recon_obj
 
+
 # Temporal ordering utilities
 
 
-def build_trees_with_temporal_order(host_dict: dict, parasite_dict: dict, reconciliation: dict) \
-        -> Tuple[tree.Tree, tree.Tree, ConsistencyType]:
+def build_trees_with_temporal_order(
+    host_dict: dict, parasite_dict: dict, reconciliation: dict
+) -> Tuple[tree.Tree, tree.Tree, ConsistencyType]:
     """
     This function uses topological sort to order the nodes inside host and parasite tree.
     The output trees can be used for visualization.
@@ -170,7 +177,9 @@ def build_trees_with_temporal_order(host_dict: dict, parasite_dict: dict, reconc
         consistency_type = ConsistencyType.STRONG_CONSISTENCY
     else:
         # the reconciliation is not strongly consistent, we relax the temporal constraints
-        temporal_graph = build_temporal_graph(host_dict, parasite_dict, reconciliation, False)
+        temporal_graph = build_temporal_graph(
+            host_dict, parasite_dict, reconciliation, False
+        )
         ordering_dict = topological_order(temporal_graph)
         if ordering_dict is not None:
             consistency_type = ConsistencyType.WEAK_CONSISTENCY
@@ -186,8 +195,15 @@ def build_trees_with_temporal_order(host_dict: dict, parasite_dict: dict, reconc
             if max_order < ordering_dict[node]:
                 max_order = ordering_dict[node]
         leaf_order = max_order + 1
-        populate_nodes_with_order(host_tree_object.root_node, tree.TreeType.HOST, ordering_dict, leaf_order)
-        populate_nodes_with_order(parasite_tree_object.root_node, tree.TreeType.PARASITE, ordering_dict, leaf_order)
+        populate_nodes_with_order(
+            host_tree_object.root_node, tree.TreeType.HOST, ordering_dict, leaf_order
+        )
+        populate_nodes_with_order(
+            parasite_tree_object.root_node,
+            tree.TreeType.PARASITE,
+            ordering_dict,
+            leaf_order,
+        )
         return host_tree_object, parasite_tree_object, consistency_type
     else:
         return None, None, ConsistencyType.NO_CONSISTENCY
@@ -217,13 +233,13 @@ def build_formatted_tree(tree_dict):
     :param tree_dict:  a tree dictionary
     :return: A temporal graph that contains all the temporal relations implied by
              the tree. Each key is a node tuple of the form (name, type) where name
-             is a string representing the name of a parasite or host tree INTERNAL 
-             node and type is either TreeType.HOST or TreeType.PARASITE which are 
+             is a string representing the name of a parasite or host tree INTERNAL
+             node and type is either TreeType.HOST or TreeType.PARASITE which are
              defined in Recon.py. The associated value is a list of node tuples that
              are the children of this node tuple in the tree.
     """
     tree_type = None
-    if 'pTop' in tree_dict:
+    if "pTop" in tree_dict:
         tree_type = tree.TreeType.PARASITE
     else:
         tree_type = tree.TreeType.HOST
@@ -239,19 +255,27 @@ def build_formatted_tree(tree_dict):
         node_name = _bottom_node(edge_four_tuple)
         left_child_name = edge_four_tuple[2][1]
         right_child_name = edge_four_tuple[3][1]
-        formatted_tree[(node_name, tree_type)] = [(left_child_name, tree_type), (right_child_name, tree_type)]
+        formatted_tree[(node_name, tree_type)] = [
+            (left_child_name, tree_type),
+            (right_child_name, tree_type),
+        ]
     return formatted_tree
 
 
 def uniquify(elements):
     """
     :param elements:  a list whose elements might not be unique
-    :return: A list that contains only the unique elements of the input list. 
+    :return: A list that contains only the unique elements of the input list.
     """
     return list(set(elements))
 
 
-def build_temporal_graph(host_dict: dict, parasite_dict: dict, reconciliation: dict, add_strong_constraints = True):
+def build_temporal_graph(
+    host_dict: dict,
+    parasite_dict: dict,
+    reconciliation: dict,
+    add_strong_constraints=True,
+):
     """
     :param host_dict:  host tree dictionary
     :param parasite_dict:  parasite tree dictionary
@@ -261,8 +285,8 @@ def build_temporal_graph(host_dict: dict, parasite_dict: dict, reconciliation: d
                                     by a transfer event
     :return: The temporal graph which is defined as follows:
         Each key is a node tuple of the form (name, type) where name is a string representing
-        the name of a parasite or host tree INTERNAL node and type is either TreeType.HOST or 
-        TreeType.PARASITE which are defined in Recon.py. 
+        the name of a parasite or host tree INTERNAL node and type is either TreeType.HOST or
+        TreeType.PARASITE which are defined in Recon.py.
         Note that leaves of the host and parasite trees are not considered here.
         The associated value is a list of node tuples that are the children of this node tuple
         in the temporal graph.
@@ -284,27 +308,34 @@ def build_temporal_graph(host_dict: dict, parasite_dict: dict, reconciliation: d
         event_type = event_tuple[0]
         # if event type is a loss, the parasite is not actually mapped to the host in final
         # reconciliation, so we skip the node_mapping
-        if event_type == 'L':
+        if event_type == "L":
             continue
         # if the node_mapping is not a leaf_mapping, we add the first relation
-        if event_type != 'C':
-            temporal_graph[(parasite, tree.TreeType.PARASITE)].append((host, tree.TreeType.HOST))
+        if event_type != "C":
+            temporal_graph[(parasite, tree.TreeType.PARASITE)].append(
+                (host, tree.TreeType.HOST)
+            )
         # if the node_mapping is not a mapping onto the root of host tree, we add the second relation
-        if host_parent != 'Top':
-            temporal_graph[(host_parent, tree.TreeType.HOST)].append((parasite, tree.TreeType.PARASITE))
-        
+        if host_parent != "Top":
+            temporal_graph[(host_parent, tree.TreeType.HOST)].append(
+                (parasite, tree.TreeType.PARASITE)
+            )
+
         # if event is a transfer, then we add two more temporal relations
-        if event_type == 'T' and add_strong_constraints:
+        if event_type == "T" and add_strong_constraints:
             # get the mapping for the right child which is the transferred child
             right_child_mapping = event_tuple[2]
             right_child_parasite, right_child_host = right_child_mapping
             # since a transfer event is horizontal, we have these two implied relations
-            temporal_graph[(parent[right_child_host], tree.TreeType.HOST)].append((parasite, tree.TreeType.PARASITE))
+            temporal_graph[(parent[right_child_host], tree.TreeType.HOST)].append(
+                (parasite, tree.TreeType.PARASITE)
+            )
 
     for node_tuple in temporal_graph:
         # we need to make sure the associated value in the dictionary does not contain repeated node tuples
         temporal_graph[node_tuple] = uniquify(temporal_graph[node_tuple])
     return temporal_graph
+
 
 # This is a topological sort based on depth-first-search
 # https://en.wikipedia.org/wiki/Topological_sorting#Depth-first_search
@@ -329,16 +360,30 @@ def topological_order(temporal_graph):
     while unvisited_nodes:
         # removes the first node from unvisited_nodes
         start_node = unvisited_nodes.popitem(last=False)[0]
-        has_cycle, next_order = topological_order_helper(start_node, next_order, visiting_nodes,
-                               unvisited_nodes, temporal_graph, ordering_dict)
-        if has_cycle: return None
+        has_cycle, next_order = topological_order_helper(
+            start_node,
+            next_order,
+            visiting_nodes,
+            unvisited_nodes,
+            temporal_graph,
+            ordering_dict,
+        )
+        if has_cycle:
+            return None
     # reverse the ordering of the nodes
     for node_tuple in ordering_dict:
         ordering_dict[node_tuple] = next_order - ordering_dict[node_tuple]
     return ordering_dict
 
 
-def topological_order_helper(start_node, start_order, visiting_nodes, unvisited_nodes, temporal_graph, ordering_dict):
+def topological_order_helper(
+    start_node,
+    start_order,
+    visiting_nodes,
+    unvisited_nodes,
+    temporal_graph,
+    ordering_dict,
+):
     """
     :param start_node: is the starting node to explore the temporal_graph
     :param start_order: is the order we start to label the nodes with
@@ -367,10 +412,17 @@ def topological_order_helper(start_node, start_order, visiting_nodes, unvisited_
                 continue
             if child_node in unvisited_nodes:
                 unvisited_nodes.pop(child_node)
-            has_cycle_child, next_order = topological_order_helper(child_node, next_order,  visiting_nodes,
-                                            unvisited_nodes, temporal_graph, ordering_dict)
+            has_cycle_child, next_order = topological_order_helper(
+                child_node,
+                next_order,
+                visiting_nodes,
+                unvisited_nodes,
+                temporal_graph,
+                ordering_dict,
+            )
             # if we find a cycle, we stop the process
-            if has_cycle_child: return True, next_order
+            if has_cycle_child:
+                return True, next_order
         # if children are all labeled, we can label the start_node
         visiting_nodes.remove(start_node)
         ordering_dict[start_node] = next_order
@@ -392,8 +444,12 @@ def populate_nodes_with_order(tree_node, tree_type, ordering_dict, leaf_order):
         node_tuple = (tree_node.name, tree_type)
         layout.col = ordering_dict[node_tuple]
         tree_node.layout = layout
-        populate_nodes_with_order(tree_node.left_node, tree_type, ordering_dict, leaf_order)
-        populate_nodes_with_order(tree_node.right_node, tree_type, ordering_dict, leaf_order)
+        populate_nodes_with_order(
+            tree_node.left_node, tree_type, ordering_dict, leaf_order
+        )
+        populate_nodes_with_order(
+            tree_node.right_node, tree_type, ordering_dict, leaf_order
+        )
 
 
 def _get_names_of_internal_nodes(tree):

@@ -13,6 +13,7 @@ import cli_commands.reconcile
 import cli_commands.p_value
 import cli_commands.tanglegram
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="Empress tool for duplication-transfer-loss maximum parsimony reconciliation.",
@@ -20,12 +21,18 @@ def main():
     )
 
     # Create subparsers and setup the subparsers
-    subparsers = parser.add_subparsers(dest='command', help='Commands empress can run', required=True)
+    subparsers = parser.add_subparsers(
+        dest="command", help="Commands empress can run", required=True
+    )
 
     # Cost Regions
-    cost_regions_description = "Find cost regions that give same maximum parsimony reconciliations."
+    cost_regions_description = (
+        "Find cost regions that give same maximum parsimony reconciliations."
+    )
     cost_regions_parser = subparsers.add_parser(
-        'cost-regions', description=cost_regions_description, help=cost_regions_description.lower().rstrip('.'),
+        "cost-regions",
+        description=cost_regions_description,
+        help=cost_regions_description.lower().rstrip("."),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,  # print default value
     )
     cli_commands.cost_regions.add_cost_regions_to_parser(cost_regions_parser)
@@ -33,43 +40,61 @@ def main():
     # Reconcile
     reconcile_description = "Find maximum parsimony reconciliations given duplication, transfer, and loss costs."
     reconcile_parser = subparsers.add_parser(
-        'reconcile', description=reconcile_description, help=reconcile_description.lower().rstrip('.'),
+        "reconcile",
+        description=reconcile_description,
+        help=reconcile_description.lower().rstrip("."),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,  # prints default values
     )
     cli_commands.reconcile.add_reconcile_to_parser(reconcile_parser)
 
     # Histogram
-    histogram_description = "Find pairwise distance histogram of all reconciliations given duplication, transfer, " \
-                            "and loss costs."
+    histogram_description = (
+        "Find pairwise distance histogram of all reconciliations given duplication, transfer, "
+        "and loss costs."
+    )
     histogram_parser = subparsers.add_parser(
-        'histogram', description=histogram_description, help=histogram_description.lower().rstrip('.'),
+        "histogram",
+        description=histogram_description,
+        help=histogram_description.lower().rstrip("."),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,  # prints default values
     )
     cli_commands.histogram.add_histogram_to_parser(histogram_parser)
 
     # Cluster
-    cluster_description = "Find clusters of reconciliations with similar properties given duplication, transfer, " \
-                          "and loss costs."
+    cluster_description = (
+        "Find clusters of reconciliations with similar properties given duplication, transfer, "
+        "and loss costs."
+    )
     cluster_parser = subparsers.add_parser(
-        'cluster', description=cluster_description, help=cluster_description.lower().rstrip('.'),
+        "cluster",
+        description=cluster_description,
+        help=cluster_description.lower().rstrip("."),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,  # prints default values
     )
     cli_commands.cluster.add_cluster_to_parser(cluster_parser)
 
     # P Value
-    p_value_description = "Test the hypothesis that the optimal reconciliation cost was obtained using " \
-                          "a random mapping."
+    p_value_description = (
+        "Test the hypothesis that the optimal reconciliation cost was obtained using "
+        "a random mapping."
+    )
     p_value_parser = subparsers.add_parser(
-            'p-value', description=p_value_description, help=p_value_description.lower().rstrip("."),
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        "p-value",
+        description=p_value_description,
+        help=p_value_description.lower().rstrip("."),
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     cli_commands.p_value.add_p_value_to_parser(p_value_parser)
 
     # Tanglegram
-    tanglegram_description = "View a tanglegram which shows the tip mapping between the two trees."
+    tanglegram_description = (
+        "View a tanglegram which shows the tip mapping between the two trees."
+    )
     tanglegram_parser = subparsers.add_parser(
-            'tanglegram', description=tanglegram_description, help=tanglegram_description.lower().rstrip("."),
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        "tanglegram",
+        description=tanglegram_description,
+        help=tanglegram_description.lower().rstrip("."),
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     cli_commands.tanglegram.add_tanglegram_to_parser(tanglegram_parser)
 
@@ -88,6 +113,7 @@ def main():
         cli_commands.p_value.run_p_value(args)
     elif args.command == "tanglegram":
         cli_commands.tanglegram.run_tanglegram(args)
+
 
 if __name__ == "__main__":
     main()
