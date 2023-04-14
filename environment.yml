@@ -17,4 +17,3 @@ dependencies:
   - openssl
   - black
   - ete3
-prefix: /home/evan/miniconda3/envs/empress
