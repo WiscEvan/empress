@@ -170,21 +170,13 @@ class _ReconInput:
         _ReconInput._name_unnamed_nodes(tree, tree_type)
         distance_dict = tree.depths(unit_branch_lengths=True)
         # Get the actual distance annotations (zero for unannotated trees)
-        D = {}
-        for clade in distance_dict:
-            name = clade.name
-            dist = distance_dict[clade]
-            D[name] = dist
+        D = {clade.name:dist for clade,dist in tree.depths(unit_branch_lengths=True).items()}
         dfs_list = [(node.name, float(D[node.name])) for node in tree.find_clades()]
         tree_dict = {}
         _ReconInput._build_tree_dictionary(
             _ReconInput._build_tree(dfs_list), "Top", tree_dict, tree_type
         )
-        real_distances = tree.depths()
-        real_distance_dict = {}
-        for clade in real_distances:
-            name = clade.name
-            real_distance_dict[name] = dist
+        real_distance_dict = {clade.name:dist for clade,dist in tree.depths().items()}
         return tree_dict, real_distance_dict
 
     @staticmethod
